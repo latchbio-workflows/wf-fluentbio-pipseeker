@@ -14,7 +14,6 @@ from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, ge
 sys.stdout.reconfigure(line_buffering=True)
 
 @custom_task(cpu=get_num_threads, memory=get_memory_requirement_gb, storage_gib=get_disk_requirement_gb)
-#   Above is for T20 build.  For T2 mode -->  @custom_task(cpu=8, memory=64, storage_gib=300)
 def pipseeker_task(*,
                    pipseeker_mode: str,
                    output_directory: LatchOutputDir = LatchOutputDir("latch:///PIPseeker_Output"),
@@ -417,7 +416,6 @@ def pipseeker_task(*,
         subprocess.run(pipseeker_cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(f"PIPseeker failed with exit code {e.returncode}")
-        # raise e
     finally:
         print(f"Uploading results from {local_output_dir} to {destination_directory}")
         return LatchOutputDir(str(local_output_dir), remote_path=destination_directory)

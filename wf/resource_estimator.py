@@ -1,8 +1,8 @@
 import os
 from typing import Optional
-from latch.types import LatchDir, LatchFile, LatchOutputDir
+from latch.types import LatchDir, LatchFile
 from enum import Enum
-from wf.configurations import Chemistry, GenomeType, Verbosity
+from wf.configurations import GenomeType
 from wf.configurations import get_mapping_reference
 
 
@@ -26,7 +26,6 @@ def get_fastqs_size_bytes(*, fastq_directory, downsample_factor):
         fastqs_size_gb *= downsample_factor
 
     return fastqs_size_bytes
-
 
 
 def baseline_ram_estimator(*, fastqs_size_gb, fastqs_size_bytes, num_threads):
@@ -73,7 +72,8 @@ def mapping_ref_size_estimator(*, genome_source, prebuilt_genome, custom_prebuil
     else:
         # Input is a directory. Iterate over contents to get size.
         try:
-            star_index_size_bytes = sum([os.path.getsize(os.path.join(reference_p, p)) for p in os.listdir(reference_p)]) / 1024 ** 3
+            star_index_size_bytes = sum(
+                [os.path.getsize(os.path.join(reference_p, p)) for p in os.listdir(reference_p)]) / 1024 ** 3
         except:
             ValueError(f"Could not calculate the size of the reference genome directory at {reference_p}. \n"
                        f"Folder contents: {os.listdir(reference_p)}")
@@ -114,7 +114,7 @@ def molinfo_ram_estimator(*, baseline_ram_bytes, fastqs_size_bytes, num_threads,
     return molinfo_ram_bytes
 
 
-def get_num_threads(fastq_directory: Optional[LatchDir] = None):
+def get_num_threads(fastq_directory: Optional[LatchDir] = None) -> int:
     # Set number of cores based on a balance between cost savings and speed, based on the size of input fastqs.
 
     fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=None)
@@ -132,13 +132,13 @@ def get_num_threads(fastq_directory: Optional[LatchDir] = None):
         num_threads = 32
     else:
         num_threads = 64
-    return num_threads
+    return int(num_threads)
 
 
 def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,
                             sorted_bam: bool = False,
                             downsample_to: Optional[int] = None,
-                            input_reads: Optional[int] = None):
+                            input_reads: Optional[int] = None) -> int:
     downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
 
     fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
@@ -148,7 +148,8 @@ def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,
         required_space_gb = fastqs_size_gb * 11  # Previously 10x, but this option will output 2 BAM files (add 1x more space)
     else:
         required_space_gb = fastqs_size_gb * 2.5
-    return required_space_gb
+    return int(required_space_gb)
+
 
 def get_memory_requirement_gb(*,
                               fastq_directory: Optional[LatchDir] = None,
@@ -158,7 +159,7 @@ def get_memory_requirement_gb(*,
                               custom_prebuilt_genome_zipped: Optional[LatchFile],
                               downsample_to: Optional[int] = None,
                               input_reads: Optional[int] = None,
-                              sorted_bam: bool = False):
+                              sorted_bam: bool = False) -> int:
     # Get fastq size.
     downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
     fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
@@ -172,11 +173,12 @@ def get_memory_requirement_gb(*,
                                                 num_threads=num_threads)
     barcoding_ram_bytes = barcoding_ram_estimator(baseline_ram_bytes=baseline_ram_bytes, num_threads=num_threads)
     star_index_size_bytes = mapping_ref_size_estimator(genome_source=genome_source, prebuilt_genome=prebuilt_genome,
-                                                         custom_prebuilt_genome=custom_prebuilt_genome,
-                                                            custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
+                                                       custom_prebuilt_genome=custom_prebuilt_genome,
+                                                       custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
     star_ram_bytes = star_ram_estimator(star_index_size_bytes=star_index_size_bytes, num_threads=num_threads,
                                         baseline_ram_bytes=baseline_ram_bytes, sorted_bam=sorted_bam)
-    molinfo_ram_bytes = molinfo_ram_estimator(baseline_ram_bytes=baseline_ram_bytes, fastqs_size_bytes=fastqs_size_bytes,
-                                                num_threads=num_threads)
+    molinfo_ram_bytes = molinfo_ram_estimator(baseline_ram_bytes=baseline_ram_bytes,
+                                              fastqs_size_bytes=fastqs_size_bytes,
+                                              num_threads=num_threads)
 
-    return max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3
+    return int(max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3)

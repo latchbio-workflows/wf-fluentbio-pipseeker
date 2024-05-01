@@ -17,8 +17,8 @@ from latch.types import (
 )
 from latch.resources.launch_plan import LaunchPlan
 
-from wf.pipseeker import *
-
+from wf.pipseeker import pipseeker_task
+from wf.configurations import Chemistry, GenomeType, Verbosity
 
 # Define the parameters that will be displayed in the GUI and used in the workflow.
 # Note: the actual grouping of parameters is not important here, as all will be merged and available in the end.

@@ -21,7 +21,7 @@ arg DEBIAN_FRONTEND=noninteractive
 
 run curl -L https://fbs-public.s3.us-east-2.amazonaws.com/public-pipseeker-releases/pipseeker-v3.2.0/pipseeker-v3.2.0-linux.tar.gz -o pipseeker.tar.gz &&\
     tar -xzvf pipseeker.tar.gz &&\
-    mv pipseeker /bin/ &&\
+    mv pipseeker*/pipseeker /bin/ &&\
     chmod +x /bin/pipseeker
 
 run apt-get install unzip

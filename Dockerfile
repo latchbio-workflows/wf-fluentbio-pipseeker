@@ -28,7 +28,7 @@ run apt-get install unzip
 
 # Latch SDK
 # DO NOT REMOVE
-run pip install latch==2.36.10
+run pip install latch==2.41.3
 run mkdir /opt/latch
 
 # Copy workflow data (use .dockerignore to skip files)

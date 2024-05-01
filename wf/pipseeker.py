@@ -13,7 +13,7 @@ from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, ge
 
 sys.stdout.reconfigure(line_buffering=True)
 
-@custom_task(cpu=get_num_threads, memory=get_memory_requirement_gb, storage_gib=get_disk_requirement_gb)
+@custom_task(cpu=get_num_threads, memory=8, storage_gib=8)
 def pipseeker_task(*,
                    pipseeker_mode: str,
                    output_directory: LatchOutputDir = LatchOutputDir("latch:///PIPseeker_Output"),

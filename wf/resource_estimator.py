@@ -132,7 +132,7 @@ def get_num_threads(fastq_directory: Optional[LatchDir] = None) -> int:
         num_threads = 32
     else:
         num_threads = 64
-    return int(num_threads)
+    return num_threads
 
 
 def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,

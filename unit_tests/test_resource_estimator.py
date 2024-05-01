@@ -1,0 +1,102 @@
+import unittest
+import platform
+import os
+import tempfile
+import shutil
+from latch.types import LatchDir, LatchFile, LatchOutputDir
+
+from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb
+from wf.configurations import GenomeType
+from unit_tests.test_utils import UnitTest
+
+
+# Set up factory function to create a LatchDir object.
+def mock_latch_dir_instance(path):
+    return LatchDir(f'latch://{path}')
+
+
+class ResourceEstimatorTest(UnitTest):
+
+    def setUp(self):
+        super().setUp()
+        # Check whether the fastqs exist in latch account.
+        self.latch_fastq_dir_path = 'latch://26230.account/TEST_fastqs_10mb_Pbmc_v4'
+
+        # Prep test fastqs on the Latch cloud.
+        if not os.path.exists(LatchDir(self.latch_fastq_dir_path)):
+            self.fastqs_local_path = os.path.join(self.TEST_DATA, 'fastqs')
+
+            # Upload files to latch via cmd line.
+            print(f'Uploading test fastqs to Latch at {self.latch_fastq_dir_path}')
+            os.system(f'latch cp {self.fastqs_local_path} {self.latch_fastq_dir_path}')
+
+            if not os.path.exists(LatchDir(self.latch_fastq_dir_path)):
+                raise FileNotFoundError('Failed to upload or identify fastqs to Latch.')
+        else:
+            print(f"Successfully detected test FASTQs on Latch at {self.latch_fastq_dir_path}")
+
+        # Prep STAR index on the Latch cloud.
+
+        # Zipped STAR index
+        self.star_index_zipped_path_local = os.path.join(self.TEST_DATA, 'STAR_test_index.zip')
+        self.latch_star_zipped_path = 'latch://26230.account/STAR_test_index.zip'
+
+        self.star_index_dir_path_local = os.path.join(self.TEST_DATA, 'STAR_test_index')
+        self.latch_star_unzipped_dir_path = 'latch://26230.account/STAR_test_index'
+
+        if not os.path.exists(LatchFile(self.latch_star_zipped_path)):
+            print(f'Uploading STAR index to Latch at {self.latch_star_zipped_path}')
+            os.system(f'latch cp {self.star_index_zipped_path_local} {self.latch_star_zipped_path}')
+            if not os.path.exists(LatchFile(self.latch_star_zipped_path)):
+                raise FileNotFoundError('Failed to upload or identify STAR index to Latch.')
+        else:
+            print(f'Successfully detected test STAR index on Latch at {self.latch_star_zipped_path}')
+
+        # Unzipped STAR index
+        if not os.path.exists(LatchDir(self.latch_star_unzipped_dir_path)):
+            #  First, unzip the STAR index locally.
+            print(f'Unzipping STAR index to {self.star_index_dir_path_local}')
+            os.system(f'unzip {self.star_index_zipped_path_local} -d {self.star_index_dir_path_local}')
+            if not os.path.exists(self.star_index_dir_path_local):
+                raise FileNotFoundError('Failed to unzip STAR index.')
+
+            print(f'Uploading STAR index to Latch at {self.latch_star_unzipped_dir_path}')
+            os.system(f'latch cp {self.star_index_dir_path_local} {self.latch_star_unzipped_dir_path}')
+            if not os.path.exists(LatchDir(self.latch_star_unzipped_dir_path)):
+                raise FileNotFoundError('Failed to upload or identify STAR index to Latch.')
+        else:
+            print(f'Successfully detected test STAR index on Latch at {self.latch_star_unzipped_dir_path}')
+
+    def test_get_num_threads(self):
+        # Dir has very tiny fastq set so should have the 4-thread minimum.
+        # Upload the fastq files to Latch.
+
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path)), 4)
+
+    def test_get_memory_requirement_gb(self):
+        # Zipped STAR index.
+        required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                 genome_source='custom_prebuilt_genome',
+                                                 prebuilt_genome=None,
+                                                 custom_prebuilt_genome=None,
+                                                 custom_prebuilt_genome_zipped=LatchFile(self.latch_star_zipped_path),
+                                                 downsample_to=None,
+                                                 input_reads=None,
+                                                 sorted_bam=False)
+        print(required_ram)
+        self.assertAlmostEqual(required_ram, 39924.29, places=1)
+
+        # Unzipped STAR index.
+        required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                 genome_source='custom_prebuilt_genome',
+                                                 prebuilt_genome=None,
+                                                 custom_prebuilt_genome=None,
+                                                 custom_prebuilt_genome_zipped=LatchDir(self.latch_star_unzipped_dir_path),
+                                                 downsample_to=None,
+                                                 input_reads=None,
+                                                 sorted_bam=False)
+        self.assertAlmostEqual(required_ram, 39924.29, places=1)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -2,9 +2,9 @@ import os
 from typing import Optional
 from latch.types import LatchDir, LatchFile
 import requests
-from enum import Enum
 from wf.configurations import GenomeType
 from wf.configurations import get_mapping_reference
+
 
 def get_s3_object_size(url):
     # Convert the url to a format usable by response.
@@ -142,8 +142,8 @@ def molinfo_ram_estimator(*, baseline_ram_bytes, fastqs_size_bytes, num_threads,
     Coefficients are in units of GB when not multiplied by bytes data.
     Convert all GB values to bytes data aside from baseline_ram and fastqs_size, which are already in bytes units.
     """
-
-    molinfo_ram_bytes = baseline_ram_bytes + (0.772 * fastqs_size_bytes) + \
+    fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
+    molinfo_ram_bytes = baseline_ram_bytes + (0.772 * fastqs_size_gb) + \
                         1024 ** 3 * ((0.54 * exons_only) + (0.525 * num_threads) +
                                      (0.71 * num_threads * exons_only))
     return molinfo_ram_bytes

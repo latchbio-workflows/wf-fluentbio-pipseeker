@@ -1,13 +1,12 @@
 import unittest
 import os
 from latch.types import LatchDir, LatchFile
-
 from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb, mapping_ref_size_estimator
 from wf.configurations import GenomeType
 from unit_tests.test_utils import UnitTest
 
-class ResourceEstimatorTest(UnitTest):
 
+class ResourceEstimatorTest(UnitTest):
     def setUp(self):
         super().setUp()
         # Check whether the fastqs exist in latch account.
@@ -59,8 +58,6 @@ class ResourceEstimatorTest(UnitTest):
 
     def test_get_num_threads(self):
         # Dir has very tiny fastq set so should have the 4-thread minimum.
-        # Upload the fastq files to Latch.
-
         self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path)), 4)
 
     def test_get_mapping_ref_size(self):
@@ -98,7 +95,6 @@ class ResourceEstimatorTest(UnitTest):
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        print(required_ram)
         self.assertEqual(required_ram, 22)
 
         # Unzipped STAR index.
@@ -111,7 +107,7 @@ class ResourceEstimatorTest(UnitTest):
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        self.assertAlmostEqual(required_ram, 22, places=1)
+        self.assertEqual(required_ram, 22)
 
         # For the pre-built references hosted on s3.
         #   Human ref is 9.61 GB.

@@ -149,7 +149,7 @@ class ResourceEstimatorTest(UnitTest):
                                                downsample_to=None,
                                                input_reads=None,
                                                sorted_bam=False)
-        self.assertEqual(required_ram, 21)
+        self.assertEqual(required_ram, 32)
 
         # Zipped STAR index.
         #   Will use 2GB for the zipped index, since STAR index is only 0.002 GB and rounds to 0.

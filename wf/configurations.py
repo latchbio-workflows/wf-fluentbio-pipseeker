@@ -12,6 +12,15 @@ class GenomeType(Enum):
     zebrafish = "Zebrafish"
     arabidopsis_thaliana = "Arabidopsis thaliana"
 
+# Assign the latch public s3 urls for each of the prebuilt references.
+prebuilt_genome_dict = {GenomeType.human: "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCh38-2022.04.tar.gz",
+                        GenomeType.mouse: "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCm39-2022.04.tar.gz",
+                        GenomeType.human_mouse: "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCh38-and-GRCm39-2022.04.tar.gz",
+                        GenomeType.drosophilia: "s3://latch-public/test-data/18440/pipseeker-gex-reference-dm-flybase-r6-v47-2022.09.tar.gz",
+                        GenomeType.zebrafish: "s3://latch-public/test-data/18440/zebrafish_danio_rerio_GRCz11_r110_2023.08.tar.gz",
+                        GenomeType.arabidopsis_thaliana: "s3://latch-public/test-data/18440/pipseeker-gex-reference-arabidopsis-thaliana-TAIR10.55-protein-coding-2023.02.tar.gz"
+                        }
+
 
 class Chemistry(Enum):
     v3 = "v3"
@@ -36,57 +45,24 @@ def get_mapping_reference(*, genome_source, prebuilt_genome, custom_prebuilt_gen
     Returns:
         reference_p: Path to the prebuilt mapping reference.
     """
-    reference_zipped_p = None
-
-    print("\nPreparing reference genome")
+    if not get_path_only:
+        print("\nPreparing reference genome")
 
     if genome_source == "prebuilt_genome":
-        if prebuilt_genome == GenomeType.human:
-            reference_zipped_p = LatchFile(
-                "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCh38-2022.04.tar.gz"
-            ).local_path
-            reference_p = Path("/root/pipseeker-gex-reference-GRCh38-2022.04")
+        # Prebuilt genome references are hosted off-platform on s3,
+        #   so LatchFile.local_path will work only after the instance/data are procured.
 
-        elif prebuilt_genome == GenomeType.mouse:
-            reference_zipped_p = LatchFile(
-                "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCm39-2022.04.tar.gz"
-            ).local_path
-            reference_p = Path("/root/pipseeker-gex-reference-GRCm39-2022.04")
-
-        elif prebuilt_genome == GenomeType.human_mouse:
-            reference_zipped_p = LatchFile(
-                "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCh38-and-GRCm39-2022.04.tar.gz"
-            ).local_path
-            reference_p = Path(
-                "/root/pipseeker-gex-reference-GRCh38-and-GRCm39-2022.04"
-            )
-
-        elif prebuilt_genome == GenomeType.drosophilia:
-            reference_zipped_p = LatchFile(
-                "s3://latch-public/test-data/18440/pipseeker-gex-reference-dm-flybase-r6-v47-2022.09.tar.gz"
-            ).local_path
-            reference_p = Path(
-                "/root/pipseeker-gex-reference-dm-flybase-r6-v47-2022.09"
-            )
-
-        elif prebuilt_genome == GenomeType.zebrafish:
-            reference_zipped_p = LatchFile(
-                "s3://latch-public/test-data/18440/zebrafish_danio_rerio_GRCz11_r110_2023.08.tar.gz"
-            ).local_path
-            reference_p = Path("/root/zebrafish_danio_rerio_GRCz11_r110_2023.08")
-
-        elif prebuilt_genome == GenomeType.arabidopsis_thaliana:
-            reference_zipped_p = LatchFile(
-                "s3://latch-public/test-data/18440/pipseeker-gex-reference-arabidopsis-thaliana-TAIR10.55-protein-coding-2023.02.tar.gz"
-            ).local_path
-            reference_p = Path(
-                "/root/pipseeker-gex-reference-arabidopsis-thaliana-TAIR10.55-protein-coding-2023.02"
-            )
-
+        # Use the prebuilt genome dict to retrieve the url for the specified genome.
+        s3_url = prebuilt_genome_dict[prebuilt_genome]
         if get_path_only:
-            return reference_zipped_p
+            return s3_url
 
         else:
+            # Proceed to configure the LatchFile instance.
+            reference_zipped_p = LatchFile(s3_url).local_path
+            unpacked_name = Path(s3_url).stem.split('.tar')[0]
+            reference_p = Path(f"/root/{unpacked_name}")
+
             # Unpack the prebuilt reference.
             subprocess.run(
                 ["tar", "-zxvf", f"{reference_zipped_p}", "-C", "/root"],

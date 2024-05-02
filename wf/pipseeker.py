@@ -13,7 +13,7 @@ from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, ge
 
 sys.stdout.reconfigure(line_buffering=True)
 
-@custom_task(cpu=get_num_threads, memory=8, storage_gib=8)
+@custom_task(cpu=get_num_threads, memory=get_memory_requirement_gb, storage_gib=get_disk_requirement_gb)
 def pipseeker_task(*,
                    pipseeker_mode: str,
                    output_directory: LatchOutputDir = LatchOutputDir("latch:///PIPseeker_Output"),
@@ -49,7 +49,7 @@ def pipseeker_task(*,
                    annotation: Optional[LatchFile] = None,
                    report_id: Optional[str] = None,
                    report_description: Optional[str] = None,
-                   snt_fastq: Optional[LatchFile] = None,
+                   snt_fastq: Optional[LatchDir] = None,
                    snt_tags: Optional[LatchFile] = None,
                    snt_position: int = 0,
                    snt_annotation: Optional[LatchFile] = None,
@@ -58,7 +58,7 @@ def pipseeker_task(*,
                    snt_max_percent: int = 99,
                    snt_min_value: Optional[int] = None,
                    snt_max_value: Optional[int] = None,
-                   hto_fastq: Optional[LatchFile] = None,
+                   hto_fastq: Optional[LatchDir] = None,
                    hto_tags: Optional[LatchFile] = None,
                    hto_position: int = 0,
                    hto_annotation: Optional[LatchFile] = None,

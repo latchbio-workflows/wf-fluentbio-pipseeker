@@ -16,7 +16,6 @@ from latch.types import (
     LatchAppearanceType,
 )
 from latch.resources.launch_plan import LaunchPlan
-
 from wf.pipseeker import pipseeker_task
 from wf.configurations import Chemistry, GenomeType, Verbosity
 
@@ -482,7 +481,7 @@ section_buildmapref = Section(
 )
 
 metadata = LatchMetadata(
-    display_name="Fluent BioSciences PIPseeker v3.1.3",
+    display_name=f"Fluent BioSciences PIPseeker v3.2.0",
     documentation="",
     author=LatchAuthor(
         name="Fluent BioSciences"),
@@ -545,7 +544,7 @@ def pipseeker_wf(*,
                  annotation: Optional[LatchFile] = None,
                  report_id: Optional[str] = None,
                  report_description: Optional[str] = None,
-                 snt_fastq: Optional[LatchFile] = None,
+                 snt_fastq: Optional[LatchDir] = None,
                  snt_tags: Optional[LatchFile] = None,
                  snt_position: int = 0,
                  snt_annotation: Optional[LatchFile] = None,
@@ -554,7 +553,7 @@ def pipseeker_wf(*,
                  snt_max_percent: int = 99,
                  snt_min_value: Optional[int] = None,
                  snt_max_value: Optional[int] = None,
-                 hto_fastq: Optional[LatchFile] = None,
+                 hto_fastq: Optional[LatchDir] = None,
                  hto_tags: Optional[LatchFile] = None,
                  hto_position: int = 0,
                  hto_annotation: Optional[LatchFile] = None,

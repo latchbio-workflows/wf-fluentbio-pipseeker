@@ -126,6 +126,7 @@ def pipseeker_task(*,
 
             # Define the local path.
             local_output_dir = Path("/root/pipseeker_out")
+
             # Define target directory for the output.
             destination_directory = output_directory.remote_path
 

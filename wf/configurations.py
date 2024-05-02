@@ -12,6 +12,7 @@ class GenomeType(Enum):
     zebrafish = "Zebrafish"
     arabidopsis_thaliana = "Arabidopsis thaliana"
 
+
 # Assign the latch public s3 urls for each of the prebuilt references.
 prebuilt_genome_dict = {GenomeType.human: "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCh38-2022.04.tar.gz",
                         GenomeType.mouse: "s3://latch-public/test-data/18440/pipseeker-gex-reference-GRCm39-2022.04.tar.gz",

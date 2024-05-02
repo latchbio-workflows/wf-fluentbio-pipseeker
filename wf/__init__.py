@@ -202,7 +202,7 @@ full_mode_parameters = {
         batch_table_column=True,
     ),
     "genome_source": LatchParameter(display_name="Genome Reference"
-    ),
+                                    ),
     "prebuilt_genome": LatchParameter(
         display_name="Compiled Genome",
         description="Reference genome to be used",
@@ -515,6 +515,7 @@ def pipseeker_wf(*,
                  fastq_directory: Optional[LatchDir] = None,
                  chemistry: Chemistry = Chemistry.v4,
                  genome_source: str,
+                 # Set prebuilt_genome option to allow for None value.
                  prebuilt_genome: GenomeType,
                  custom_prebuilt_genome: Optional[LatchDir],
                  custom_prebuilt_genome_zipped: Optional[LatchFile],
@@ -684,4 +685,3 @@ LaunchPlan(
         "output_directory": LatchOutputDir("latch:///PIPseeker_Output/Sample2"),
     },
 )
-

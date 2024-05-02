@@ -1,0 +1,35 @@
+chr1	HAVANA	gene	44	480	.	-	.	gene_id "NOT USED"; gene_name "NOT USED"; gene_type "type_1"; level 2; tag "ncRNA_host";
+chr1	HAVANA	exon	50	73	.	-	.	gene_id "GENE01"; gene_name "GENE01_NAME"; transcript_id "GENE01_TX1"; transcript_name "GENE01_TX1_NAME"
+chr1	HAVANA	exon	82	111	.	-	.	gene_id "GENE01"; transcript_id "GENE01_TX1";
+chr1	HAVANA	exon	132	312	.	-	.	gene_id "GENE01"; transcript_id "GENE01_TX1";
+chr1	HAVANA	transcript	276	473	.	-	.	gene_id "NOT USED"; transcript_id "NOT USED"; transcript_name "NOT USED";
+chr1	HAVANA	exon	290	380	.	-	.	gene_id "GENE01"; transcript_id "GENE01_TX2"; transcript_name "GENE01_TX2_NAME";
+chr1	HAVANA	exon	405	413	.	-	.	gene_id "GENE01"; transcript_id "GENE01_TX2";
+chr1	HAVANA	exon	419	466	.	-	.	gene_id "GENE01"; transcript_id "GENE01_TX2";
+
+chr1	HAVANA	transcript	481	567	.	-	.	gene_id "NOT USED"; gene_name "NOT USED";  transcript_id "NOT USED"; transcript_name "NOT USED";
+chr1	HAVANA	exon	481	510	.	-	.	gene_id "GENE02"; gene_name "GENE02_NAME"; transcript_id "GENE02_TX1";
+chr1	HAVANA	exon	507	557	.	-	.	gene_id "GENE02"; transcript_id "GENE02_TX1";
+
+chr1	HAVANA	exon	802	831	.	-	.	gene_id "GENE03"; transcript_id "GENE03_TX1"; transcript_name "GENE03_TX1_NAME";
+chr1	HAVANA	exon	856	871	.	-	.	gene_id "GENE03"; transcript_id "GENE03_TX1"; transcript_name "NOT USED";
+chr1	HAVANA	exon	888	908	.	-	.	gene_id "GENE03"; transcript_id "GENE03_TX1";
+chr1	HAVANA	transcript	995	1112	.	-	.	gene_id "NOT USED"; transcript_id "NOT USED";
+chr1	HAVANA	exon	999	1022	.	-	.	gene_id "GENE03"; transcript_id "GENE03_TX2"; transcript_name "GENE03_TX2_NAME";
+chr1	HAVANA	exon	1092	1111	.	-	.	gene_id "GENE03"; transcript_id "GENE03_TX3"; transcript_name "GENE03_TX3_NAME";
+
+chr2	HAVANA	transcript	11	96	.	+	.	gene_id "NOT USED"; transcript_id "NOT USED"; transcript_name "NOT USED";
+chr2	HAVANA	exon	13	27	.	+	.	gene_id "GENE04"; gene_name "GENE04_NAME"; transcript_id "GENE04_TX1"; transcript_name "GENE04_TX1_NAME";
+chr2	HAVANA	exon	40	96	.	+	.	gene_id "GENE04"; transcript_id "GENE04_TX1";
+
+chr3	HAVANA	exon	100	128	.	+	.	gene_id "GENE05"; gene_name "GENE05_NAME"; transcript_id "GENE05_TX1"; transcript_name "GENE05_TX1_NAME";
+chr3	HAVANA	exon	256	292	.	+	.	gene_id "GENE05"; transcript_id "GENE05_TX1";
+chr3	HAVANA	exon	780	896	.	+	.	gene_id "GENE05"; transcript_id "GENE05_TX2";
+chr3	HAVANA	exon	1242	1474	.	+	.	gene_id "GENE05"; transcript_id "GENE05_TX2"; transcript_name "GENE05_TX2_NAME";
+chr3	HAVANA	exon	1672	1801	.	+	.	gene_id "GENE05"; transcript_id "GENE05_TX2";
+
+chr3	HAVANA	exon	1666	1707	.	+	.	gene_id "GENE06"; transcript_id "GENE06_TX1"; transcript_name "GENE06_TX1_NAME";
+chr3	HAVANA	exon	1809	1840	.	+	.	gene_id "GENE06"; transcript_id "GENE06_TX1"; transcript_name "NOT USED";
+
+chr3	HAVANA	exon	2013	2050	.	+	.	gene_id "GENE07"; gene_name "GENE07_NAME"; transcript_id "GENE07_TX1"; transcript_name "GENE07_TX1_NAME";
+chr3	HAVANA	exon	2119	2132	.	+	.	gene_id "GENE07"; transcript_id "GENE07_TX1";

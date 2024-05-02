@@ -1,0 +1,19 @@
+### /root/dev/pipeline/src/STAR/linux/STAR   --runMode genomeGenerate      --runThreadN 8   --genomeDir /root/dev/pipeline/test/test_data/CLI/STAR_index   --genomeFastaFiles /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa      --genomeSAindexNbases 4   --sjdbGTFfile /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf   --sjdbOverhang 99
+### GstrandBit 32
+versionGenome	2.7.4a
+genomeType	Full
+genomeFastaFiles	/root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa 
+genomeSAindexNbases	4
+genomeChrBinNbits	18
+genomeSAsparseD	1
+genomeTransformType	None
+genomeTransformVCF	-
+sjdbOverhang	99
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	/root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	exon
+sjdbGTFtagExonParentTranscript	transcript_id
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic
+genomeFileSizes	788820 47746

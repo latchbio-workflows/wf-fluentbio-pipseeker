@@ -1,0 +1,17 @@
+	/root/dev/pipeline/src/STAR/linux/STAR --runMode genomeGenerate --genomeFastaFiles /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa --sjdbGTFfile /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf --genomeDir /root/dev/pipeline/test/test_data/CLI/STAR_index --sjdbOverhang 99 --genomeSAsparseD 3 --runThreadN 8
+	STAR version: 2.7.10a_alpha_220818   compiled: 2022-09-27T13:54:45+0000 :/home/STAR-2.7.10a_alpha_220818/source
+Apr 11 16:43:03 ..... started STAR run
+Apr 11 16:43:03 ... starting to generate Genome files
+Apr 11 16:43:03 ..... processing annotations GTF
+!!!!! WARNING: --genomeSAindexNbases 14 is too large for the genome size=3604, which may cause seg-fault at the mapping step. Re-run genome generation with recommended --genomeSAindexNbases 4
+Apr 11 16:43:03 ... starting to sort Suffix Array. This may take a long time...
+Apr 11 16:43:03 ... sorting Suffix Array chunks and saving them to disk...
+Apr 11 16:43:03 ... loading chunks from disk, packing SA...
+Apr 11 16:43:03 ... finished generating suffix array
+Apr 11 16:43:03 ... generating Suffix Array index
+Apr 11 16:43:06 ... completed Suffix Array index
+Apr 11 16:43:06 ..... inserting junctions into the genome indices
+Apr 11 16:43:13 ... writing Genome to disk ...
+Apr 11 16:43:13 ... writing Suffix Array to disk ...
+Apr 11 16:43:13 ... writing SAindex to disk
+Apr 11 16:43:14 ..... finished successfully

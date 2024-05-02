@@ -181,6 +181,7 @@ def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,
                             prebuilt_genome: GenomeType,
                             custom_prebuilt_genome: Optional[LatchDir],
                             custom_prebuilt_genome_zipped: Optional[LatchFile],
+                            safety_margin=1.5,  # include 50% overage since have unexpected overhead.
                             **kwargs
                             ) -> int:
     # Set defaults.
@@ -212,11 +213,10 @@ def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,
                                                         custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
     if prebuilt_genome is not None or custom_prebuilt_genome_zipped is not None:
         # If need to unpack the index, add on 2.25x the size of the index to cover the index + unpacked copy.
-        required_space_gb = (fastqs_size_bytes + star_index_size_bytes * 2.25) / 1024 ** 3
+        star_index_size_bytes = star_index_size_bytes * 2.25
 
-    else:
-        # Uncompressed custom prebuilt genome.
-        required_space_gb = (fastqs_size_bytes + star_index_size_bytes) / 1024 ** 3
+    # Final calculation
+    required_space_gb = (fastqs_size_bytes + star_index_size_bytes + 1 ) * safety_margin / 1024 ** 3
 
     # In event have < 1GB, will be rounded to 0. Setting minimum default disk as 2GB.
     return int(max(required_space_gb, 2))

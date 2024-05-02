@@ -5,7 +5,7 @@ import tempfile
 import shutil
 from latch.types import LatchDir, LatchFile, LatchOutputDir
 
-from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb
+from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb, mapping_ref_size_estimator
 from wf.configurations import GenomeType
 from unit_tests.test_utils import UnitTest
 
@@ -73,6 +73,31 @@ class ResourceEstimatorTest(UnitTest):
 
         self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path)), 4)
 
+    def test_get_mapping_ref_size(self):
+
+        # Zipped STAR index.
+        ref_size_bytes = mapping_ref_size_estimator(genome_source='custom_prebuilt_genome',
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=None,
+                                                custom_prebuilt_genome_zipped=LatchFile(self.latch_star_zipped_path))
+        self.assertEqual(ref_size_bytes, 1965038.75)  # 0.00183 GB
+
+        # Unzipped STAR index.
+        ref_size_bytes = mapping_ref_size_estimator(genome_source='custom_prebuilt_genome',
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=LatchDir(self.latch_star_unzipped_dir_path),
+                                                custom_prebuilt_genome_zipped=None)
+        self.assertEqual(ref_size_bytes, 2169065)  # 0.00202 GB
+
+        # For the pre-built references hosted on s3.
+        #   Human ref is 9.61 GB.
+        ref_size = mapping_ref_size_estimator(genome_source='prebuilt_genome',
+                                              prebuilt_genome=GenomeType.human,
+                                              custom_prebuilt_genome=None,
+                                              custom_prebuilt_genome_zipped=None)
+        ref_size_gb = ref_size / 1024 ** 3
+        self.assertAlmostEqual(ref_size_gb, 9.61, places=2)
+
     def test_get_memory_requirement_gb(self):
         # Zipped STAR index.
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
@@ -84,18 +109,95 @@ class ResourceEstimatorTest(UnitTest):
                                                  input_reads=None,
                                                  sorted_bam=False)
         print(required_ram)
-        self.assertAlmostEqual(required_ram, 39924.29, places=1)
+        self.assertEqual(required_ram, 22)
 
         # Unzipped STAR index.
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
                                                  genome_source='custom_prebuilt_genome',
                                                  prebuilt_genome=None,
                                                  custom_prebuilt_genome=None,
-                                                 custom_prebuilt_genome_zipped=LatchDir(self.latch_star_unzipped_dir_path),
+                                                 custom_prebuilt_genome_zipped=LatchDir(
+                                                     self.latch_star_unzipped_dir_path),
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        self.assertAlmostEqual(required_ram, 39924.29, places=1)
+        self.assertAlmostEqual(required_ram, 22, places=1)
+
+        # For the pre-built references hosted on s3.
+        #   Human ref is 9.61 GB.
+        required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                               snt_fastq=None,
+                                               hto_fastq=None,
+                                               genome_source='prebuilt_genome',
+                                               prebuilt_genome=GenomeType.human,
+                                               custom_prebuilt_genome=None,
+                                               custom_prebuilt_genome_zipped=None,
+                                               downsample_to=None,
+                                               input_reads=None,
+                                               sorted_bam=False)
+        self.assertEqual(required_ram, 22)
+
+    def test_disk_requirement_gb(self):
+        # On s3 (human genome is 9.61 GB).
+        required_ram = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                               snt_fastq=None,
+                                               hto_fastq=None,
+                                               genome_source='prebuilt_genome',
+                                               prebuilt_genome=GenomeType.human,
+                                               custom_prebuilt_genome=None,
+                                               custom_prebuilt_genome_zipped=None,
+                                               downsample_to=None,
+                                               input_reads=None,
+                                               sorted_bam=False)
+        self.assertEqual(required_ram, 21)
+
+        # Zipped STAR index.
+        #   Will use 2GB for the zipped index, since STAR index is only 0.002 GB and rounds to 0.
+        required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                genome_source='custom_prebuilt_genome',
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=None,
+                                                custom_prebuilt_genome_zipped=LatchFile(self.latch_star_zipped_path),
+                                                downsample_to=None,
+                                                input_reads=None,
+                                                sorted_bam=False)
+        self.assertEqual(required_disk, 2)
+
+        # Unzipped STAR index.
+        #   Again, uses 2GB because of small unzipped index size.
+        required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                genome_source='custom_prebuilt_genome',
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=None,
+                                                custom_prebuilt_genome_zipped=LatchDir(
+                                                    self.latch_star_unzipped_dir_path),
+                                                downsample_to=None,
+                                                input_reads=None,
+                                                sorted_bam=False)
+        self.assertEqual(required_disk, 2)
+
+        # No fastqs.
+        required_disk = get_disk_requirement_gb(fastq_directory=None,
+                                                genome_source='custom_prebuilt_genome',
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=None,
+                                                custom_prebuilt_genome_zipped=LatchDir(
+                                                    self.latch_star_unzipped_dir_path),
+                                                downsample_to=None,
+                                                input_reads=None,
+                                                sorted_bam=False)
+        self.assertEqual(required_disk, 2)
+
+        # No fastqs, no genome.
+        required_disk = get_disk_requirement_gb(fastq_directory=None,
+                                                genome_source=None,
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=None,
+                                                custom_prebuilt_genome_zipped=None,
+                                                downsample_to=None,
+                                                input_reads=None,
+                                                sorted_bam=False)
+        self.assertEqual(required_disk, 2)
 
 
 if __name__ == '__main__':

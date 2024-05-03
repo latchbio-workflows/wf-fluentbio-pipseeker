@@ -23,6 +23,12 @@ prebuilt_genome_dict = {GenomeType.human: "s3://latch-public/test-data/18440/pip
                         }
 
 
+class PIPseekerMode(Enum):
+    full = 'full_mode'
+    cells = 'cells_mode'
+    buildmapref = 'buildmapref_mode'
+
+
 class Chemistry(Enum):
     v3 = "v3"
     v4 = "v4"

@@ -23,6 +23,7 @@ from wf import pipseeker_wf
 from unit_tests.test_utils import UnitTest
 import glob
 
+
 class PIPseekerTest(UnitTest):
 
     def test_snt_mode(self):

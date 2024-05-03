@@ -2,13 +2,11 @@ import subprocess
 import sys
 
 from pathlib import Path
-from typing import Optional, List
-
+from typing import Optional
 from latch import custom_task
 from latch.functions.messages import message
 from latch.types import LatchDir, LatchFile, LatchOutputDir
-from wf.configurations import GenomeType, Chemistry, Verbosity, get_mapping_reference
-
+from wf.configurations import GenomeType, PIPseekerMode, Chemistry, Verbosity, get_mapping_reference
 from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb
 
 sys.stdout.reconfigure(line_buffering=True)
@@ -94,7 +92,7 @@ def pipseeker_task(*,
         "--skip-version-check"
     ]
 
-    if pipseeker_mode in ['full_mode', 'cells_mode']:
+    if pipseeker_mode in [PIPseekerMode.full.value, PIPseekerMode.cells.value]:
 
         print("\nPreparing run")
 
@@ -117,7 +115,7 @@ def pipseeker_task(*,
         ]
 
         # Full Mode.
-        if pipseeker_mode == 'full_mode':
+        if pipseeker_mode == PIPseekerMode.full.value:
             # Obtain the reference path for prebuilt references.
             reference_p = get_mapping_reference(genome_source=genome_source,
                                                 prebuilt_genome=prebuilt_genome,
@@ -158,7 +156,7 @@ def pipseeker_task(*,
                     ]
 
         # Cells Mode.
-        elif pipseeker_mode == 'cells_mode':
+        elif pipseeker_mode == PIPseekerMode.cells.value:
 
             # Define the local and target path for full and cells mode.
             local_output_dir = previous.local_path
@@ -358,7 +356,8 @@ def pipseeker_task(*,
                 )
 
     # PIPseeker buildmapref mode.
-    elif pipseeker_mode == 'buildmapref_mode':
+    elif pipseeker_mode == PIPseekerMode.buildmapref.value:
+
         custom_genome_reference_gtf_p = Path(custom_genome_reference_gtf)
         custom_genome_reference_fasta_p = Path(custom_genome_reference_fasta)
 

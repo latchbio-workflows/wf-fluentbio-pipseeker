@@ -2,8 +2,7 @@ import os
 from typing import Optional
 from latch.types import LatchDir, LatchFile
 import requests
-from wf.configurations import GenomeType
-from wf.configurations import get_mapping_reference
+from wf.configurations import GenomeType, PIPseekerMode, get_mapping_reference
 
 
 def get_s3_object_size(url):
@@ -32,14 +31,14 @@ def get_downsample_factor(*, downsample_to, input_reads):
 
 def get_fastqs_size_bytes(*, fastq_directory, downsample_factor):
     fastqs_size_bytes = 0
-    for file in fastq_directory.iterdir():  # Using iterdir() to iterate over contents
-        if isinstance(file, LatchFile) and file.path.endswith('.fastq.gz'):
-            fastqs_size_bytes += file.size()
-    fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
-    print(f'Input FASTQs size: {fastqs_size_gb:.2f} GB')
-    if downsample_factor is not None:
-        fastqs_size_gb *= downsample_factor
-
+    if fastq_directory is not None:
+        for file in fastq_directory.iterdir():  # Using iterdir() to iterate over contents
+            if isinstance(file, LatchFile) and file.path.endswith('.fastq.gz'):
+                fastqs_size_bytes += file.size()
+        fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
+        print(f'Input FASTQs size: {fastqs_size_gb:.2f} GB')
+        if downsample_factor is not None:
+            fastqs_size_gb *= downsample_factor
     return fastqs_size_bytes
 
 
@@ -149,29 +148,66 @@ def molinfo_ram_estimator(*, baseline_ram_bytes, fastqs_size_bytes, num_threads,
     return molinfo_ram_bytes
 
 
-def get_num_threads(fastq_directory: Optional[LatchDir] = None,
+def get_output_dir_size(*, output_directory: LatchDir) -> int:
+    output_dir_size = 0
+    for file in output_directory.iterdir():
+        if isinstance(file, LatchFile):
+            output_dir_size += file.size()
+    output_dir_size_bytes = int(output_dir_size / 1024 ** 3)
+    return output_dir_size_bytes
+
+
+def get_num_threads(pipseeker_mode: str = None,
+                    fastq_directory: Optional[LatchDir] = None,
+                    output_directory: Optional[LatchDir] = None,
                     **kwargs) -> int:
-    # Set number of cores based on a balance between cost savings and speed, based on the size of input fastqs.
+    """
+    Set number of cores based on a balance between cost savings and speed.
+    For 'full' mode, set based on the size of input fastqs.
+    For 'cells' mode, set based on the size of the output directory.
+    For 'buildmapref' mode, set to 32 cores to tap into the max efficiency of STAR.
+    """
+    if pipseeker_mode == PIPseekerMode.full.value:
 
-    fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=None)
-    fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
+        fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=None)
+        fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
 
-    if fastqs_size_gb < 1:
-        num_threads = 4
-    elif fastqs_size_gb < 4:
-        num_threads = 8
-    elif fastqs_size_gb < 8:
-        num_threads = 12
-    elif fastqs_size_gb < 16:
-        num_threads = 24
-    elif fastqs_size_gb < 32:
-        num_threads = 32
+        if fastqs_size_gb < 1:
+            num_threads = 4
+        elif fastqs_size_gb < 4:
+            num_threads = 8
+        elif fastqs_size_gb < 8:
+            num_threads = 12
+        elif fastqs_size_gb < 16:
+            num_threads = 24
+        else:
+            num_threads = 32
+
+    elif pipseeker_mode == PIPseekerMode.cells.value:
+        output_dir_size_bytes = get_output_dir_size(output_directory=output_directory)
+        output_dir_size_gb = output_dir_size_bytes / 1024 ** 3
+
+        if output_dir_size_gb < 1:
+            num_threads = 4
+        elif output_dir_size_gb < 4:
+            num_threads = 8
+        elif output_dir_size_gb < 8:
+            num_threads = 16
+        elif output_dir_size_gb < 16:
+            num_threads = 24
+        else:
+            num_threads = 32
+
     else:
-        num_threads = 64
+        # buildmapref_mode
+        num_threads = 32
+
     return num_threads
 
 
-def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,
+def get_disk_requirement_gb(*, pipseeker_mode: str = None,
+                            output_directory: Optional[LatchDir] = None,
+                            fastq_directory: Optional[LatchDir] = None,
                             snt_fastq: Optional[LatchDir] = None,
                             hto_fastq: Optional[LatchDir] = None,
                             sorted_bam: bool = False,
@@ -184,45 +220,66 @@ def get_disk_requirement_gb(*, fastq_directory: Optional[LatchDir] = None,
                             safety_margin=1.5,  # include 50% overage since have unexpected overhead.
                             **kwargs
                             ) -> int:
-    # Set defaults.
-    fastqs_size_bytes = 0
-    snt_fastq_size_bytes = 0
-    hto_fastq_size_bytes = 0
+    """
+    For 'full' mode, use the size of the input fastqs and STAR index to estimate disk space.
+    For 'cells' mode, use the size of the output directory * 1.5 (or updated safety margin) to estimate disk space.
+    For 'buildmapref' mode, set to 100 GB as a default.
+    """
 
-    if fastq_directory:
-        downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
-        fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
+    if pipseeker_mode == PIPseekerMode.full.value:
+        # Set defaults.
+        fastqs_size_bytes = 0
+        snt_fastq_size_bytes = 0
+        hto_fastq_size_bytes = 0
 
-    if snt_fastq:
-        snt_fastq_size_bytes = get_fastqs_size_bytes(fastq_directory=snt_fastq, downsample_factor=None)
-    if hto_fastq:
-        hto_fastq_size_bytes = get_fastqs_size_bytes(fastq_directory=hto_fastq, downsample_factor=None)
+        if fastq_directory:
+            downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
+            fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
 
-    if sorted_bam:
-        # Previously 10x, but this option will output 2 BAM files (add 1x more space).
-        #   Also add +1x for storing the input fastqs.
-        fastqs_size_bytes = fastqs_size_bytes * 12 + snt_fastq_size_bytes + hto_fastq_size_bytes
+        if snt_fastq:
+            snt_fastq_size_bytes = get_fastqs_size_bytes(fastq_directory=snt_fastq, downsample_factor=None)
+        if hto_fastq:
+            hto_fastq_size_bytes = get_fastqs_size_bytes(fastq_directory=hto_fastq, downsample_factor=None)
+
+        if sorted_bam:
+            # Previously 10x, but this option will output 2 BAM files (add 1x more space).
+            #   Also add +1x for storing the input fastqs.
+            fastqs_size_bytes = fastqs_size_bytes * 12 + snt_fastq_size_bytes + hto_fastq_size_bytes
+        else:
+            # 2.5x + 1x for housing the input fastqs
+            fastqs_size_bytes = fastqs_size_bytes * 3.5 + snt_fastq_size_bytes + hto_fastq_size_bytes
+
+        # Add on the STAR index size, since need to store and unpack in some cases.
+        star_index_size_bytes = mapping_ref_size_estimator(genome_source=genome_source,
+                                                            prebuilt_genome=prebuilt_genome,
+                                                            custom_prebuilt_genome=custom_prebuilt_genome,
+                                                            custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
+        if prebuilt_genome is not None or custom_prebuilt_genome_zipped is not None:
+            # If need to unpack the index, add on 2.25x the size of the index to cover the index + unpacked copy.
+            star_index_size_bytes = star_index_size_bytes * 2.25
+
+        # Final calculation
+        required_space_gb = (fastqs_size_bytes + star_index_size_bytes + 1 ) * safety_margin / 1024 ** 3
+
+        # In event have < 1GB, will be rounded to 0. Setting minimum default disk as 2GB.
+        return int(max(required_space_gb, 2))
+
+    elif pipseeker_mode == PIPseekerMode.cells.value:
+        # Get the size of the output directory and multiply by safety margin
+        #  to include chance of adding additional sensitivity levels, etc.
+        output_dir_size_bytes = get_output_dir_size(output_directory=output_directory)
+        required_space_gb = output_dir_size_bytes * safety_margin / 1024 ** 3
+        return int(max(required_space_gb, 2))
+
     else:
-        # 2.5x + 1x for housing the input fastqs
-        fastqs_size_bytes = fastqs_size_bytes * 3.5 + snt_fastq_size_bytes + hto_fastq_size_bytes
-
-    # Add on the STAR index size, since need to store and unpack in some cases.
-    star_index_size_bytes = mapping_ref_size_estimator(genome_source=genome_source,
-                                                        prebuilt_genome=prebuilt_genome,
-                                                        custom_prebuilt_genome=custom_prebuilt_genome,
-                                                        custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
-    if prebuilt_genome is not None or custom_prebuilt_genome_zipped is not None:
-        # If need to unpack the index, add on 2.25x the size of the index to cover the index + unpacked copy.
-        star_index_size_bytes = star_index_size_bytes * 2.25
-
-    # Final calculation
-    required_space_gb = (fastqs_size_bytes + star_index_size_bytes + 1 ) * safety_margin / 1024 ** 3
-
-    # In event have < 1GB, will be rounded to 0. Setting minimum default disk as 2GB.
-    return int(max(required_space_gb, 2))
+        # buildmapref_mode
+        #  Set to default of 100 GB to accomodate any size inputs.
+        return 100  # GB
 
 
 def get_memory_requirement_gb(*,
+                              pipseeker_mode: str = None,
+                              output_directory: Optional[LatchDir] = None,
                               fastq_directory: Optional[LatchDir] = None,
                               genome_source: str,
                               prebuilt_genome: GenomeType,
@@ -232,24 +289,41 @@ def get_memory_requirement_gb(*,
                               input_reads: Optional[int] = None,
                               sorted_bam: bool = False,
                               **kwargs) -> int:
-    # Get fastq size.
-    downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
-    fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
-    fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
+    """
+    For 'full' mode, use standard peak barcoding, STAR, and molecule info RAM estimators.
+    For 'cells' mode, use the output directory size to estimate RAM.
+    For 'buildmapref' mode, set to 50 GB as a default.
+    """
+    if pipseeker_mode == PIPseekerMode.full.value:
+        # Get fastq size.
+        downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
+        fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
+        fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
 
-    # Num threads calc.
-    num_threads = get_num_threads(fastq_directory=fastq_directory)
+        # Num threads calc.
+        num_threads = get_num_threads(fastq_directory=fastq_directory)
 
-    # Baseline ram calc.
-    baseline_ram_bytes = baseline_ram_estimator(fastqs_size_gb=fastqs_size_gb, num_threads=num_threads)
-    barcoding_ram_bytes = barcoding_ram_estimator(baseline_ram_bytes=baseline_ram_bytes, num_threads=num_threads)
-    star_index_size_bytes = mapping_ref_size_estimator(genome_source=genome_source, prebuilt_genome=prebuilt_genome,
-                                                       custom_prebuilt_genome=custom_prebuilt_genome,
-                                                       custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
-    star_ram_bytes = star_ram_estimator(star_index_size_bytes=star_index_size_bytes, num_threads=num_threads,
-                                        baseline_ram_bytes=baseline_ram_bytes, sorted_bam=sorted_bam)
-    molinfo_ram_bytes = molinfo_ram_estimator(baseline_ram_bytes=baseline_ram_bytes,
-                                              fastqs_size_bytes=fastqs_size_bytes,
-                                              num_threads=num_threads)
+        # Baseline ram calc.
+        baseline_ram_bytes = baseline_ram_estimator(fastqs_size_gb=fastqs_size_gb, num_threads=num_threads)
+        barcoding_ram_bytes = barcoding_ram_estimator(baseline_ram_bytes=baseline_ram_bytes, num_threads=num_threads)
+        star_index_size_bytes = mapping_ref_size_estimator(genome_source=genome_source, prebuilt_genome=prebuilt_genome,
+                                                           custom_prebuilt_genome=custom_prebuilt_genome,
+                                                           custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped)
+        star_ram_bytes = star_ram_estimator(star_index_size_bytes=star_index_size_bytes, num_threads=num_threads,
+                                            baseline_ram_bytes=baseline_ram_bytes, sorted_bam=sorted_bam)
+        molinfo_ram_bytes = molinfo_ram_estimator(baseline_ram_bytes=baseline_ram_bytes,
+                                                  fastqs_size_bytes=fastqs_size_bytes,
+                                                  num_threads=num_threads)
+        return int(max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3)
 
-    return int(max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3)
+    elif pipseeker_mode == PIPseekerMode.cells.value:
+        # Num threads calc.
+        # Get output dir size.
+        output_dir_size_bytes = get_output_dir_size(output_directory=output_directory)
+        output_dir_size_gb = output_dir_size_bytes / 1024 ** 3
+
+        return min(int(output_dir_size_gb / 1024 ** 3), 100)
+
+    else:
+        # buildmapref_mode
+        return 50  # GB

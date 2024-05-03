@@ -31,23 +31,14 @@ class PIPseekerTest(UnitTest):
         self.local_snt_dir_path = os.path.join(self.TEST_DATA, 'snt_tests')
 
         # Test snt mode LOCAL
-        pipseeker_wf(pipseeker_mode='full_mode',
-                     chemistry=Chemistry.v4,
-                     output_directory='.',
-                     fastq_directory=os.path.join(self.local_snt_dir_path, 'fastqs'),
+        pipseeker_wf(pipseeker_mode='full_mode', output_directory='.',
+                     fastq_directory=os.path.join(self.local_snt_dir_path, 'fastqs'), chemistry=Chemistry.v4,
+                     genome_source='custom_prebuilt_genome', prebuilt_genome=GenomeType.human,
+                     custom_prebuilt_genome=None, custom_prebuilt_genome_zipped=self.star_index_zipped_path_local,
+                     min_sensitivity=1, max_sensitivity=3, clustering_percent_genes=80, diff_exp_genes=50,
                      snt_fastq=os.path.join(self.local_snt_dir_path, 'snt_fastqs'),
-                     snt_tags=os.path.join(self.local_snt_dir_path, 'tags_1_withExtra.csv'),
-                     snt_position=3,
-                     genome_source='custom_prebuilt_genome',
-                     prebuilt_genome=GenomeType.human,
-                     custom_prebuilt_genome=None,
-                     custom_prebuilt_genome_zipped=self.star_index_zipped_path_local,
-                     custom_genome_reference_gtf=None,
-                     custom_genome_reference_fasta=None,
-                     min_sensitivity=1,
-                     max_sensitivity=3,
-                     clustering_percent_genes=80,
-                     diff_exp_genes=50)
+                     snt_tags=os.path.join(self.local_snt_dir_path, 'tags_1_withExtra.csv'), snt_position=3,
+                     custom_genome_reference_fasta=None, custom_genome_reference_gtf=None)
 
         # Verify that the RNA analysis ran to completion, and that cell calling and clustering outputs
         # are based on RNA datre stored in the main output directory.

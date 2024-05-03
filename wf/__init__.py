@@ -73,7 +73,7 @@ shared_parameters = {
         batch_table_column=True,
     ),
     "nearest_neighbors": LatchParameter(
-        display_name="Nearest Neighbours",
+        display_name="Nearest Neighbors",
         batch_table_column=True,
     ),
     "resolution": LatchParameter(
@@ -188,6 +188,18 @@ shared_parameters = {
         display_name="Output Directory",
         description="Output Directory",
         batch_table_column=True
+    ),
+    "override_ram_gb": LatchParameter(
+        display_name="Override RAM (GB)",
+        batch_table_column=True,
+    ),
+    "override_disk_gb": LatchParameter(
+        display_name="Override Disk (GB)",
+        batch_table_column=True,
+    ),
+    "override_cpu": LatchParameter(
+        display_name="Override CPU (GB)",
+        batch_table_column=True,
     )
 }
 
@@ -384,6 +396,17 @@ shared_full_cells_mode_spoiler_section = Section("",
                                                  )
                                                  )
 
+shared_spoiler_resource_allocation = Section("",
+                                             Section(
+                                                 "Override Automatic Resource Allocation \n(Use With Caution)",
+                                                 Params(
+                                                     "override_ram_gb",
+                                                     "override_disk_gb",
+                                                     "override_cpu"
+                                                 )
+                                             )
+                                             )
+
 full_mode_spoiler_section = Section("",
                                     Section(
                                         "FASTQ Processing",
@@ -446,7 +469,8 @@ section_full_mode = Section(
     Spoiler(
         "Additional Parameters",
         full_mode_spoiler_section,
-        shared_full_cells_mode_spoiler_section)
+        shared_full_cells_mode_spoiler_section,
+        shared_spoiler_resource_allocation)
 )
 
 section_cells_mode = Section(
@@ -456,7 +480,8 @@ section_cells_mode = Section(
     Spoiler(
         "Additional Parameters",
         shared_full_cells_mode_spoiler_section,
-        Params("hash_cellsmode")
+        Params("hash_cellsmode"),
+        shared_spoiler_resource_allocation
     )
 )
 
@@ -475,11 +500,14 @@ section_buildmapref = Section(
             "biotype_tag",
             "read_length",
             "sparsity",
-            "additional_params_buildmapref",
-        )
+            "additional_params_buildmapref"
+        ),
+        shared_spoiler_resource_allocation
     )
 )
 
+
+# Dashboard Layout
 metadata = LatchMetadata(
     display_name=f"Fluent BioSciences PIPseeker v3.2.0",
     documentation="",
@@ -577,7 +605,13 @@ def pipseeker_wf(*,
                  biotype_tag: Optional[str] = None,
                  read_length: Optional[int] = 100,
                  sparsity: Optional[int] = 3,
-                 additional_params_buildmapref: Optional[str] = None
+                 additional_params_buildmapref: Optional[str] = None,
+
+                 # Override resource allocation
+                 override_ram_gb: Optional[int] = None,
+                 override_disk_gb: Optional[int] = None,
+                 override_cpu: Optional[int] = None
+                 
                  ) -> LatchOutputDir:
     """
     # Fluent BioSciences PIPseeker
@@ -593,75 +627,32 @@ def pipseeker_wf(*,
     (ADTs) and cell hashing using hashtag oligonucleotides (HTOs).
 
     """
-    return pipseeker_task(
-        pipseeker_mode=pipseeker_mode,
-        output_directory=output_directory,
-        fastq_directory=fastq_directory,
-        chemistry=chemistry,
-        genome_source=genome_source,
-        prebuilt_genome=prebuilt_genome,
-        custom_prebuilt_genome=custom_prebuilt_genome,
-        custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped,
-        sorted_bam=sorted_bam,
-        verbosity=verbosity,
-        random_seed=random_seed,
-        save_svg=save_svg,
-        dpi=dpi,
-        remove_bam=remove_bam,
-        downsample_to=downsample_to,
-        input_reads=input_reads,
-        retain_barcoded_fastqs=retain_barcoded_fastqs,
-        exons_only=exons_only,
-        min_sensitivity=min_sensitivity,
-        max_sensitivity=max_sensitivity,
-        force_cells=force_cells,
-        run_barnyard=run_barnyard,
-        clustering_percent_genes=clustering_percent_genes,
-        diff_exp_genes=diff_exp_genes,
-        principal_components=principal_components,
-        nearest_neighbors=nearest_neighbors,
-        resolution=resolution,
-        clustering_sensitivity=clustering_sensitivity,
-        min_clusters_kmeans=min_clusters_kmeans,
-        max_clusters_kmeans=max_clusters_kmeans,
-        umap_axes=umap_axes,
-        annotation=annotation,
-        report_id=report_id,
-        report_description=report_description,
-        snt_fastq=snt_fastq,
-        snt_tags=snt_tags,
-        snt_position=snt_position,
-        snt_annotation=snt_annotation,
-        snt_colormap=snt_colormap,
-        snt_min_percent=snt_min_percent,
-        snt_max_percent=snt_max_percent,
-        snt_min_value=snt_min_value,
-        snt_max_value=snt_max_value,
-        hto_fastq=hto_fastq,
-        hto_tags=hto_tags,
-        hto_position=hto_position,
-        hto_annotation=hto_annotation,
-        hto_colormap=hto_colormap,
-        hto_colorbar=hto_colorbar,
-        hto_min_percent=hto_min_percent,
-        hto_max_percent=hto_max_percent,
-        hto_min_value=hto_min_value,
-        hto_max_value=hto_max_value,
-
-        # cells mode args
-        hash_cellsmode=hash_cellsmode,
-        previous=previous,
-
-        # buildmapref mode args
-        custom_genome_reference_fasta=custom_genome_reference_fasta,
-        custom_genome_reference_gtf=custom_genome_reference_gtf,
-        include_types=include_types,
-        exclude_types=exclude_types,
-        biotype_tag=biotype_tag,
-        read_length=read_length,
-        sparsity=sparsity,
-        additional_params_buildmapref=additional_params_buildmapref
-    )
+    return pipseeker_task(pipseeker_mode=pipseeker_mode, output_directory=output_directory,
+                          fastq_directory=fastq_directory, chemistry=chemistry, genome_source=genome_source,
+                          prebuilt_genome=prebuilt_genome, custom_prebuilt_genome=custom_prebuilt_genome,
+                          custom_prebuilt_genome_zipped=custom_prebuilt_genome_zipped, verbosity=verbosity,
+                          random_seed=random_seed, save_svg=save_svg, dpi=dpi, downsample_to=downsample_to,
+                          input_reads=input_reads, retain_barcoded_fastqs=retain_barcoded_fastqs, sorted_bam=sorted_bam,
+                          remove_bam=remove_bam, exons_only=exons_only, min_sensitivity=min_sensitivity,
+                          max_sensitivity=max_sensitivity, force_cells=force_cells, run_barnyard=run_barnyard,
+                          clustering_percent_genes=clustering_percent_genes, diff_exp_genes=diff_exp_genes,
+                          principal_components=principal_components, nearest_neighbors=nearest_neighbors,
+                          resolution=resolution, clustering_sensitivity=clustering_sensitivity,
+                          min_clusters_kmeans=min_clusters_kmeans, max_clusters_kmeans=max_clusters_kmeans,
+                          umap_axes=umap_axes, annotation=annotation, report_id=report_id,
+                          report_description=report_description, snt_fastq=snt_fastq, snt_tags=snt_tags,
+                          snt_position=snt_position, snt_annotation=snt_annotation, snt_colormap=snt_colormap,
+                          snt_min_percent=snt_min_percent, snt_max_percent=snt_max_percent, snt_min_value=snt_min_value,
+                          snt_max_value=snt_max_value, hto_fastq=hto_fastq, hto_tags=hto_tags,
+                          hto_position=hto_position, hto_annotation=hto_annotation, hto_colormap=hto_colormap,
+                          hto_colorbar=hto_colorbar, hto_min_percent=hto_min_percent, hto_max_percent=hto_max_percent,
+                          hto_min_value=hto_min_value, hto_max_value=hto_max_value, previous=previous,
+                          hash_cellsmode=hash_cellsmode, custom_genome_reference_fasta=custom_genome_reference_fasta,
+                          custom_genome_reference_gtf=custom_genome_reference_gtf, include_types=include_types,
+                          exclude_types=exclude_types, biotype_tag=biotype_tag, read_length=read_length,
+                          sparsity=sparsity, additional_params_buildmapref=additional_params_buildmapref, 
+                          override_ram_gb=override_ram_gb, override_disk_gb=override_disk_gb, 
+                          override_cpu=override_cpu)
 
 
 # Testing

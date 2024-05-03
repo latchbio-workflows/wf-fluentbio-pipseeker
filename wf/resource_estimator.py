@@ -148,65 +148,73 @@ def molinfo_ram_estimator(*, baseline_ram_bytes, fastqs_size_bytes, num_threads,
     return molinfo_ram_bytes
 
 
-def get_output_dir_size(*, output_directory: LatchDir) -> int:
-    output_dir_size = 0
-    for file in output_directory.iterdir():
+def get_previous_dir_size(*, previous_directory: LatchDir) -> int:
+    previous_dir_size = 0
+    for file in previous_directory.iterdir():
         if isinstance(file, LatchFile):
-            output_dir_size += file.size()
-    output_dir_size_bytes = int(output_dir_size / 1024 ** 3)
-    return output_dir_size_bytes
+            previous_dir_size += file.size()
+    previous_dir_size_bytes = int(previous_dir_size / 1024 ** 3)
+    return previous_dir_size_bytes
 
 
 def get_num_threads(pipseeker_mode: str = None,
                     fastq_directory: Optional[LatchDir] = None,
-                    output_directory: Optional[LatchDir] = None,
+                    previous: Optional[LatchDir] = None,
+                    override_cpu: Optional[int] = None,
                     **kwargs) -> int:
     """
     Set number of cores based on a balance between cost savings and speed.
     For 'full' mode, set based on the size of input fastqs.
-    For 'cells' mode, set based on the size of the output directory.
+    For 'cells' mode, set based on the size of the previous directory.
     For 'buildmapref' mode, set to 32 cores to tap into the max efficiency of STAR.
     """
+    # Check for override.
+    if override_cpu:
+        if override_cpu > 64:
+            print("Max physical CPU usable by pipseeker is 32 (64 virtual). Proceeding with 64 virtual cores.")
+        return min(32, override_cpu)
+
+    # Determine threads depending on the selected pipseeker mode.
     if pipseeker_mode == PIPseekerMode.full.value:
 
         fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=None)
         fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
 
         if fastqs_size_gb < 1:
-            num_threads = 4
-        elif fastqs_size_gb < 4:
             num_threads = 8
+        elif fastqs_size_gb < 4:
+            num_threads = 16
         elif fastqs_size_gb < 8:
-            num_threads = 12
-        elif fastqs_size_gb < 16:
-            num_threads = 24
-        else:
             num_threads = 32
+        elif fastqs_size_gb < 16:
+            num_threads = 48
+        else:
+            num_threads = 64
 
     elif pipseeker_mode == PIPseekerMode.cells.value:
-        output_dir_size_bytes = get_output_dir_size(output_directory=output_directory)
-        output_dir_size_gb = output_dir_size_bytes / 1024 ** 3
+        previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
+        previous_dir_size_gb = previous_dir_size_bytes / 1024 ** 3
 
-        if output_dir_size_gb < 1:
-            num_threads = 4
-        elif output_dir_size_gb < 4:
+        if previous_dir_size_gb < 1:
             num_threads = 8
-        elif output_dir_size_gb < 8:
+        elif previous_dir_size_gb < 4:
             num_threads = 16
-        elif output_dir_size_gb < 16:
-            num_threads = 24
+        elif previous_dir_size_gb < 8:
+            num_threads = 32
+        elif previous_dir_size_gb < 16:
+            num_threads = 48
         else:
             num_threads = 32
 
     else:
         # buildmapref_mode
-        num_threads = 32
+        num_threads = 64
 
     return num_threads
 
 
 def get_disk_requirement_gb(*, pipseeker_mode: str = None,
-                            output_directory: Optional[LatchDir] = None,
+                            previous: Optional[LatchDir] = None,
                             fastq_directory: Optional[LatchDir] = None,
                             snt_fastq: Optional[LatchDir] = None,
                             hto_fastq: Optional[LatchDir] = None,
@@ -218,13 +226,17 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
                             custom_prebuilt_genome: Optional[LatchDir],
                             custom_prebuilt_genome_zipped: Optional[LatchFile],
                             safety_margin=1.5,  # include 50% overage since have unexpected overhead.
+                            override_disk_gb: Optional[int] = None,
                             **kwargs
                             ) -> int:
     """
     For 'full' mode, use the size of the input fastqs and STAR index to estimate disk space.
-    For 'cells' mode, use the size of the output directory * 1.5 (or updated safety margin) to estimate disk space.
+    For 'cells' mode, use the size of the previous directory * 1.5 (or updated safety margin) to estimate disk space.
     For 'buildmapref' mode, set to 100 GB as a default.
     """
+    # Check for override.
+    if override_disk_gb:
+        return override_disk_gb
 
     if pipseeker_mode == PIPseekerMode.full.value:
         # Set defaults.
@@ -265,10 +277,10 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
         return int(max(required_space_gb, 2))
 
     elif pipseeker_mode == PIPseekerMode.cells.value:
-        # Get the size of the output directory and multiply by safety margin
+        # Get the size of the previous directory and multiply by safety margin
         #  to include chance of adding additional sensitivity levels, etc.
-        output_dir_size_bytes = get_output_dir_size(output_directory=output_directory)
-        required_space_gb = output_dir_size_bytes * safety_margin / 1024 ** 3
+        previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
+        required_space_gb = previous_dir_size_bytes * safety_margin / 1024 ** 3
         return int(max(required_space_gb, 2))
 
     else:
@@ -279,7 +291,7 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
 
 def get_memory_requirement_gb(*,
                               pipseeker_mode: str = None,
-                              output_directory: Optional[LatchDir] = None,
+                              previous: Optional[LatchDir] = None,
                               fastq_directory: Optional[LatchDir] = None,
                               genome_source: str,
                               prebuilt_genome: GenomeType,
@@ -288,12 +300,17 @@ def get_memory_requirement_gb(*,
                               downsample_to: Optional[int] = None,
                               input_reads: Optional[int] = None,
                               sorted_bam: bool = False,
+                              override_ram_gb: Optional[int] = None,
                               **kwargs) -> int:
     """
     For 'full' mode, use standard peak barcoding, STAR, and molecule info RAM estimators.
-    For 'cells' mode, use the output directory size to estimate RAM.
+    For 'cells' mode, use the previous directory size to estimate RAM.
     For 'buildmapref' mode, set to 50 GB as a default.
     """
+    # Check for override.
+    if override_ram_gb:
+        return override_ram_gb
+
     if pipseeker_mode == PIPseekerMode.full.value:
         # Get fastq size.
         downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
@@ -318,11 +335,11 @@ def get_memory_requirement_gb(*,
 
     elif pipseeker_mode == PIPseekerMode.cells.value:
         # Num threads calc.
-        # Get output dir size.
-        output_dir_size_bytes = get_output_dir_size(output_directory=output_directory)
-        output_dir_size_gb = output_dir_size_bytes / 1024 ** 3
+        # Get previous dir size.
+        previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
+        previous_dir_size_gb = previous_dir_size_bytes / 1024 ** 3
 
-        return min(int(output_dir_size_gb / 1024 ** 3), 100)
+        return min(int(previous_dir_size_gb / 1024 ** 3), 100)
 
     else:
         # buildmapref_mode

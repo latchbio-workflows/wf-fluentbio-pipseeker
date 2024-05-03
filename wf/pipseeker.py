@@ -11,6 +11,7 @@ from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, ge
 
 sys.stdout.reconfigure(line_buffering=True)
 
+
 @custom_task(cpu=get_num_threads, memory=get_memory_requirement_gb, storage_gib=get_disk_requirement_gb)
 def pipseeker_task(*,
                    pipseeker_mode: str,
@@ -79,9 +80,31 @@ def pipseeker_task(*,
                    biotype_tag: Optional[str] = None,
                    read_length: Optional[int] = 100,
                    sparsity: Optional[int] = 3,
-                   additional_params_buildmapref: Optional[str] = None
+                   additional_params_buildmapref: Optional[str] = None,
+
+                   # Override resource allocation
+                   #    (Only used for dynamic resource allocation decorator)
+                   override_ram_gb: Optional[int] = None,
+                   override_disk_gb: Optional[int] = None,
+                   override_cpu: Optional[int] = None
+
                    ) -> LatchOutputDir:
+
     print(f"Running {pipseeker_mode}")
+
+    if override_cpu or override_ram_gb or override_disk_gb:
+        print(f"Overriding resource allocation:")
+        if override_ram_gb:
+            print(f"RAM: {override_ram_gb} GB")
+        if override_disk_gb:
+            print(f"Disk: {override_disk_gb} GB")
+        if override_cpu:
+            if override_cpu > 64:
+                print(f'CPU override value of {override_cpu} exceeds max of 32 physical cores used by PIPseeker.'
+                      f' Setting to 64.')
+            else:
+                print(f"CPU: {override_cpu}")
+
 
     # Shared args.
     universal_shared_args = [

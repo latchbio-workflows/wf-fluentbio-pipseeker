@@ -2,7 +2,7 @@ import unittest
 import os
 from latch.types import LatchDir, LatchFile
 from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb, mapping_ref_size_estimator
-from wf.configurations import GenomeType
+from wf.configurations import GenomeType, PIPseekerMode
 from unit_tests.test_utils import UnitTest
 
 
@@ -58,7 +58,35 @@ class ResourceEstimatorTest(UnitTest):
 
     def test_get_num_threads(self):
         # Dir has very tiny fastq set so should have the 4-thread minimum.
-        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path)), 4)
+        # Full mode.
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                         pipseeker_mode=PIPseekerMode.full), 8)
+
+        # Check the override function.
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                         pipseeker_mode=PIPseekerMode.full,
+                                         override_cpu=7), 7)
+
+        #   Max threads is 64 so should default to that.
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                         pipseeker_mode=PIPseekerMode.full,
+                                         override_cpu=1000), 64)
+
+        # Buildmapref mode uses 64 threads by default.
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                         pipseeker_mode=PIPseekerMode.buildmapref), 64)
+
+        # Custom threads, set lower.
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                         pipseeker_mode=PIPseekerMode.buildmapref,
+                                         override_cpu=1), 1)
+
+        # Custom threads, set higher.
+        self.assertEqual(get_num_threads(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                         pipseeker_mode=PIPseekerMode.buildmapref,
+                                         override_cpu=1000), 64)
+
+
 
     def test_get_mapping_ref_size(self):
 
@@ -88,6 +116,7 @@ class ResourceEstimatorTest(UnitTest):
     def test_get_memory_requirement_gb(self):
         # Zipped STAR index.
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                 pipseeker_mode=PIPseekerMode.full,
                                                  genome_source='custom_prebuilt_genome',
                                                  prebuilt_genome=None,
                                                  custom_prebuilt_genome=None,
@@ -95,10 +124,11 @@ class ResourceEstimatorTest(UnitTest):
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        self.assertEqual(required_ram, 22)
+        self.assertEqual(38, required_ram)
 
         # Unzipped STAR index.
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                 pipseeker_mode=PIPseekerMode.full,
                                                  genome_source='custom_prebuilt_genome',
                                                  prebuilt_genome=None,
                                                  custom_prebuilt_genome=None,
@@ -107,11 +137,12 @@ class ResourceEstimatorTest(UnitTest):
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        self.assertEqual(required_ram, 22)
+        self.assertEqual(38, required_ram)
 
         # For the pre-built references hosted on s3.
         #   Human ref is 9.61 GB.
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                 pipseeker_mode=PIPseekerMode.full,
                                                snt_fastq=None,
                                                hto_fastq=None,
                                                genome_source='prebuilt_genome',
@@ -121,11 +152,27 @@ class ResourceEstimatorTest(UnitTest):
                                                downsample_to=None,
                                                input_reads=None,
                                                sorted_bam=False)
-        self.assertEqual(required_ram, 22)
+        self.assertEqual(38, required_ram)
+
+        # Test the override function
+        required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                 pipseeker_mode=PIPseekerMode.full,
+                                                 snt_fastq=None,
+                                                 hto_fastq=None,
+                                                 genome_source='prebuilt_genome',
+                                                 prebuilt_genome=GenomeType.human,
+                                                 custom_prebuilt_genome=None,
+                                                 custom_prebuilt_genome_zipped=None,
+                                                 downsample_to=None,
+                                                 input_reads=None,
+                                                 sorted_bam=False,
+                                                 override_ram_gb=1000)
+        self.assertEqual(required_ram, 1000)
 
     def test_disk_requirement_gb(self):
         # On s3 (human genome is 9.61 GB).
         required_ram = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                               pipseeker_mode=PIPseekerMode.full,
                                                snt_fastq=None,
                                                hto_fastq=None,
                                                genome_source='prebuilt_genome',
@@ -140,6 +187,7 @@ class ResourceEstimatorTest(UnitTest):
         # Zipped STAR index.
         #   Will use 2GB for the zipped index, since STAR index is only 0.002 GB and rounds to 0.
         required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                pipseeker_mode=PIPseekerMode.full,
                                                 genome_source='custom_prebuilt_genome',
                                                 prebuilt_genome=None,
                                                 custom_prebuilt_genome=None,
@@ -152,6 +200,7 @@ class ResourceEstimatorTest(UnitTest):
         # Unzipped STAR index.
         #   Again, uses 2GB because of small unzipped index size.
         required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                pipseeker_mode=PIPseekerMode.full,
                                                 genome_source='custom_prebuilt_genome',
                                                 prebuilt_genome=None,
                                                 custom_prebuilt_genome=None,
@@ -164,6 +213,7 @@ class ResourceEstimatorTest(UnitTest):
 
         # No fastqs.
         required_disk = get_disk_requirement_gb(fastq_directory=None,
+                                                pipseeker_mode=PIPseekerMode.full,
                                                 genome_source='custom_prebuilt_genome',
                                                 prebuilt_genome=None,
                                                 custom_prebuilt_genome=None,
@@ -176,6 +226,7 @@ class ResourceEstimatorTest(UnitTest):
 
         # No fastqs, no genome.
         required_disk = get_disk_requirement_gb(fastq_directory=None,
+                                                pipseeker_mode=PIPseekerMode.full,
                                                 genome_source=None,
                                                 prebuilt_genome=None,
                                                 custom_prebuilt_genome=None,
@@ -185,6 +236,19 @@ class ResourceEstimatorTest(UnitTest):
                                                 sorted_bam=False)
         self.assertEqual(required_disk, 2)
 
+        # Test the override function
+        required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+                                                pipseeker_mode=PIPseekerMode.full,
+                                                genome_source='custom_prebuilt_genome',
+                                                prebuilt_genome=None,
+                                                custom_prebuilt_genome=None,
+                                                custom_prebuilt_genome_zipped=LatchDir(
+                                                    self.latch_star_unzipped_dir_path),
+                                                downsample_to=None,
+                                                input_reads=None,
+                                                sorted_bam=False,
+                                                override_disk_gb=1000)
+        self.assertAlmostEqual(required_disk, 1000, places=1)
 
 if __name__ == '__main__':
     unittest.main()

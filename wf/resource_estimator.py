@@ -169,13 +169,19 @@ def get_num_threads(pipseeker_mode: str = None,
     For 'buildmapref' mode, set to 32 cores to tap into the max efficiency of STAR.
     """
     # Check for override.
-    if override_cpu:
+    if override_cpu is not None:
         if override_cpu > 64:
-            print("Max physical CPU usable by pipseeker is 32 (64 virtual). Proceeding with 64 virtual cores.")
-        return min(32, override_cpu)
+            print('Max physical CPU usable by pipseeker is 32 (64 virtual). Proceeding with 64 virtual cores.')
+            override_cpu = 64
+        else:
+            print('Overriding CPU count to:', override_cpu)
+        return override_cpu
 
     # Determine threads depending on the selected pipseeker mode.
-    if pipseeker_mode == PIPseekerMode.full.value:
+    if not pipseeker_mode:
+        raise ValueError('pipseeker_mode must be specified to determine the number of threads.')
+
+    if pipseeker_mode == PIPseekerMode.full:
 
         fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=None)
         fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
@@ -191,7 +197,7 @@ def get_num_threads(pipseeker_mode: str = None,
         else:
             num_threads = 64
 
-    elif pipseeker_mode == PIPseekerMode.cells.value:
+    elif pipseeker_mode == PIPseekerMode.cells:
         previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
         previous_dir_size_gb = previous_dir_size_bytes / 1024 ** 3
 
@@ -204,7 +210,7 @@ def get_num_threads(pipseeker_mode: str = None,
         elif previous_dir_size_gb < 16:
             num_threads = 48
         else:
-            num_threads = 32
+            num_threads = 64
 
     else:
         # buildmapref_mode
@@ -238,7 +244,10 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
     if override_disk_gb:
         return override_disk_gb
 
-    if pipseeker_mode == PIPseekerMode.full.value:
+    if pipseeker_mode is None:
+        raise ValueError('pipseeker_mode must be specified.')
+
+    if pipseeker_mode == PIPseekerMode.full:
         # Set defaults.
         fastqs_size_bytes = 0
         snt_fastq_size_bytes = 0
@@ -276,7 +285,7 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
         # In event have < 1GB, will be rounded to 0. Setting minimum default disk as 2GB.
         return int(max(required_space_gb, 2))
 
-    elif pipseeker_mode == PIPseekerMode.cells.value:
+    elif pipseeker_mode == PIPseekerMode.cells:
         # Get the size of the previous directory and multiply by safety margin
         #  to include chance of adding additional sensitivity levels, etc.
         previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
@@ -311,14 +320,17 @@ def get_memory_requirement_gb(*,
     if override_ram_gb:
         return override_ram_gb
 
-    if pipseeker_mode == PIPseekerMode.full.value:
+    if pipseeker_mode is None:
+        raise ValueError('pipseeker_mode must be specified.')
+
+    if pipseeker_mode == PIPseekerMode.full:
         # Get fastq size.
         downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
         fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
         fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
 
         # Num threads calc.
-        num_threads = get_num_threads(fastq_directory=fastq_directory)
+        num_threads = get_num_threads(fastq_directory=fastq_directory, pipseeker_mode=pipseeker_mode)
 
         # Baseline ram calc.
         baseline_ram_bytes = baseline_ram_estimator(fastqs_size_gb=fastqs_size_gb, num_threads=num_threads)
@@ -333,7 +345,7 @@ def get_memory_requirement_gb(*,
                                                   num_threads=num_threads)
         return int(max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3)
 
-    elif pipseeker_mode == PIPseekerMode.cells.value:
+    elif pipseeker_mode == PIPseekerMode.cells:
         # Num threads calc.
         # Get previous dir size.
         previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)

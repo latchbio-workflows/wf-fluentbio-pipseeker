@@ -47,8 +47,10 @@ def baseline_ram_estimator(*, fastqs_size_gb, num_threads):
     # Coefficients are in units of GB; fastqs_size is in units of bytes
     # Convert bytes to GB before calculating; then reconvert to bytes.
 
-    baseline_ram_bytes = 1024 ** 3 * (2.24 + (0.01 * fastqs_size_gb) +
-                                      (0.0011 * num_threads * fastqs_size_gb))
+    # Barcoding is fixed at 16 threads max, so adjust prior to calculating.
+    num_threads = min(num_threads, 16)
+    baseline_ram_bytes = (2.24 + (0.01 * fastqs_size_gb) +
+                                      (0.0011 * num_threads * fastqs_size_gb)) * 1024 ** 3
     return baseline_ram_bytes
 
 

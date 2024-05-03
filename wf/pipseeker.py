@@ -48,19 +48,25 @@ def pipseeker_task(*,
                    annotation: Optional[LatchFile] = None,
                    report_id: Optional[str] = None,
                    report_description: Optional[str] = None,
+
+                   # SNT args.
                    snt_fastq: Optional[LatchDir] = None,
                    snt_tags: Optional[LatchFile] = None,
                    snt_position: int = 0,
+                   snt_label: Optional[str] = None,
+                   # SNT args supported in cells mode.
                    snt_annotation: Optional[LatchFile] = None,
                    snt_colormap: str = "gray-to-green",
                    snt_min_percent: int = 1,
                    snt_max_percent: int = 99,
                    snt_min_value: Optional[int] = None,
                    snt_max_value: Optional[int] = None,
+
+                   # HTO args.
                    hto_fastq: Optional[LatchDir] = None,
                    hto_tags: Optional[LatchFile] = None,
                    hto_position: int = 0,
-                   hto_annotation: Optional[LatchFile] = None,
+                   # HTO args supported in cells mode.
                    hto_colormap: str = "gray-to-red",
                    hto_colorbar: bool = False,
                    hto_min_percent: int = 1,
@@ -284,18 +290,26 @@ def pipseeker_task(*,
             )
 
         if snt_fastq is not None:
-            pipseeker_cmd += [
-                "--snt-fastq",
-                f"{snt_fastq.local_path}/.",  # Use period for directory input.
-                "--snt-position",
-                f"{snt_position}"
-            ]
-
-            if snt_tags is not None:
+            if pipseeker_mode == PIPseekerMode.full.value:
+                # The following 4 params are not supported in cells mode.
                 pipseeker_cmd += [
-                    "--snt-tags",
-                    f"{snt_tags.local_path}",
+                    "--snt-fastq",
+                    f"{snt_fastq.local_path}/.",  # Use period for directory input.
+                    "--snt-position",
+                    f"{snt_position}"
                 ]
+
+                if snt_tags is not None:
+                    pipseeker_cmd += [
+                        "--snt-tags",
+                        f"{snt_tags.local_path}",
+                    ]
+
+                if snt_label is not None:
+                    pipseeker_cmd += [
+                        "--snt-label",
+                        f"{snt_label}"
+                    ]
 
             if snt_annotation is not None:
                 pipseeker_cmd += [
@@ -334,18 +348,16 @@ def pipseeker_task(*,
                 )
 
         if hto_fastq is not None:
-            pipseeker_cmd += [
-                "--hto-fastq",
-                f"{hto_fastq.local_path}/.",  # Use period for directory input.
-                "--hto-position",
-                f"{hto_position}"
-            ]
+            if pipseeker_mode == PIPseekerMode.full.value:
+                # The following 3 params are not supported in cells mode.
+                pipseeker_cmd += [
+                    "--hto-fastq",
+                    f"{hto_fastq.local_path}/.",  # Use period for directory input.
+                    "--hto-position",
+                    f"{hto_position}" ]
 
-            if hto_tags is not None:
-                pipseeker_cmd += ["--hto-tags", f"{hto_tags.local_path}"]
-
-            if hto_annotation is not None:
-                pipseeker_cmd += ["--hto-annotation", f"{hto_annotation.local_path}"]
+                if hto_tags is not None:
+                    pipseeker_cmd += ["--hto-tags", f"{hto_tags.local_path}"]
 
             if hto_colormap is not None:
                 pipseeker_cmd += ["--hto-colormap", f"{hto_colormap}"]

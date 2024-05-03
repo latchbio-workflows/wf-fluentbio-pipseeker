@@ -18,7 +18,7 @@ Usage:
 
 import unittest
 import os
-from wf.configurations import GenomeType, Chemistry
+from wf.configurations import GenomeType, Chemistry, PIPseekerMode
 from wf import pipseeker_wf
 from unit_tests.test_utils import UnitTest
 import glob
@@ -31,7 +31,7 @@ class PIPseekerTest(UnitTest):
         self.local_snt_dir_path = os.path.join(self.TEST_DATA, 'snt_tests')
 
         # Test snt mode LOCAL
-        pipseeker_wf(pipseeker_mode='full_mode', output_directory='.',
+        pipseeker_wf(pipseeker_mode=PIPseekerMode.full.value, output_directory='.',
                      fastq_directory=os.path.join(self.local_snt_dir_path, 'fastqs'), chemistry=Chemistry.v4,
                      genome_source='custom_prebuilt_genome', prebuilt_genome=GenomeType.human,
                      custom_prebuilt_genome=None, custom_prebuilt_genome_zipped=self.star_index_zipped_path_local,
@@ -40,20 +40,47 @@ class PIPseekerTest(UnitTest):
                      snt_tags=os.path.join(self.local_snt_dir_path, 'tags_1_withExtra.csv'), snt_position=3,
                      custom_genome_reference_fasta=None, custom_genome_reference_gtf=None)
 
-        # Verify that the RNA analysis ran to completion, and that cell calling and clustering outputs
-        # are based on RNA datre stored in the main output directory.
-        sens_1_2_3 = ['sensitivity_1', 'sensitivity_2', 'sensitivity_3']
+        # # Verify that the RNA analysis ran to completion, and that cell calling and clustering outputs
+        # #   are specific to the indicated sensitivites.
+
         self.output_dir = os.path.join('pipseeker_out')
+        expected_sensitivities = ['sensitivity_1', 'sensitivity_2', 'sensitivity_3']
+
         self.logs_dir = os.path.join(self.output_dir, 'logs')
         self.verify_log_file(included=['Saving molecule info file', 'Running clustering', 'sensitivity_3',
                                        'Creating summary report', 'Merging SNT data'],
                              excluded=['Merging HTO data'], msg='Failed')
 
-        self.verify_dir_ls(os.path.join(self.output_dir, 'cell_calling'), sens_1_2_3, msg='Failed')
-        self.verify_dir_ls(os.path.join(self.output_dir, 'clustering'), sens_1_2_3, msg='Failed')
+        self.verify_dir_ls(os.path.join(self.output_dir, 'cell_calling'), expected_sensitivities, msg='Failed')
+        self.verify_dir_ls(os.path.join(self.output_dir, 'clustering'), expected_sensitivities, msg='Failed')
         self.assertFalse(os.path.isdir(os.path.join(self.output_dir, 'SNT', 'cell_calling')), 'Failed')
         self.assertFalse(os.path.isdir(os.path.join(self.output_dir, 'SNT', 'clustering')), 'Failed')
         self.assertTrue(os.path.isfile(os.path.join(self.output_dir,'report.html')), 'Failed')
+
+
+        # CELLS MODE
+        #  Run it on the previous full run.
+        pipseeker_wf(pipseeker_mode=PIPseekerMode.cells.value, previous=self.output_dir, force_cells=99,
+                     # Add extra params required for workflow that aren't required by cells mode...
+                     genome_source='custom_prebuilt_genome', prebuilt_genome=GenomeType.human,
+                     custom_prebuilt_genome=None, custom_prebuilt_genome_zipped=self.star_index_zipped_path_local,
+                     clustering_percent_genes=80, diff_exp_genes=50,
+                     # snt_fastq=os.path.join(self.local_snt_dir_path, 'snt_fastqs'),
+                     # snt_tags=os.path.join(self.local_snt_dir_path, 'tags_1_withExtra.csv'), snt_position=3,
+                     custom_genome_reference_fasta=None, custom_genome_reference_gtf=None)
+
+        expected_sensitivities = ['force_99', 'sensitivity_1', 'sensitivity_2', 'sensitivity_3']
+
+        self.logs_dir = os.path.join(self.output_dir, 'logs')
+        self.verify_log_file(included=['Running clustering', 'force_99', 'Creating summary report'],
+                             excluded=['Merging SNT data' 'Saving molecule info file'], msg='Failed')
+
+        self.verify_dir_ls(os.path.join(self.output_dir, 'cell_calling'), expected_sensitivities, msg='Failed')
+        self.verify_dir_ls(os.path.join(self.output_dir, 'clustering'), expected_sensitivities, msg='Failed')
+        self.assertFalse(os.path.isdir(os.path.join(self.output_dir, 'SNT', 'cell_calling')), 'Failed')
+        self.assertFalse(os.path.isdir(os.path.join(self.output_dir, 'SNT', 'clustering')), 'Failed')
+        self.assertTrue(os.path.isfile(os.path.join(self.output_dir, 'report.html')), 'Failed')
+
 
     def get_latest_log_file(self, logs_dir=None):
         if logs_dir is None:
@@ -98,5 +125,36 @@ class PIPseekerTest(UnitTest):
         # Verify directory contents against a list of expected files (names only, not full path).
         self.assertEqual(sorted(os.listdir(dir)), sorted(expected), msg=msg)
 
+
 if __name__ == '__main__':
+
     unittest.main()
+
+
+#
+    import subprocess
+    import pty
+    import select
+
+    # Start up the test environment, using the top-level directory of the Latch project as the working directory.
+    latch_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Relies on being 2 dirs up from containing dir, test_data.
+    os.chdir(latch_dir_path)
+    # Deploy the test dev env.
+    master_fd, slave_fd = pty.openpty()
+
+    proc = subprocess.Popen(['latch', 'develop', '.', ';', 'python3 unit_tests/test_pipseeker.py'], stdin=slave_fd, stdout=slave_fd, stderr=subprocess.STDOUT,
+                            close_fds=True)
+    os.close(slave_fd)  # Close the slave FD because it's now being used by the subprocess.
+
+    try:
+        while True:
+            r, _, _ = select.select([master_fd], [], [], 0.1)
+            if r:
+                output = os.read(master_fd, 1024).decode()
+                if output:
+                    print(output, end='')  # Print output in real time
+            if proc.poll() is not None:
+                break
+    finally:
+        os.close(master_fd)
+

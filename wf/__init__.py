@@ -108,18 +108,6 @@ shared_parameters = {
         display_name="Report Description",
         batch_table_column=True,
     ),
-    "snt_fastq": LatchParameter(
-        display_name="SNT FASTQ Path",
-        batch_table_column=True,
-    ),
-    "snt_tags": LatchParameter(
-        display_name="SNT Tags path",
-        batch_table_column=True,
-    ),
-    "snt_position": LatchParameter(
-        display_name="SNT Position",
-        batch_table_column=True,
-    ),
     "snt_annotation": LatchParameter(
         display_name="SNT Annotation",
         batch_table_column=True,
@@ -142,22 +130,6 @@ shared_parameters = {
     ),
     "snt_max_value": LatchParameter(
         display_name="SNT Max Value",
-        batch_table_column=True,
-    ),
-    "hto_fastq": LatchParameter(
-        display_name="HTO FASTQ Path",
-        batch_table_column=True,
-    ),
-    "hto_tags": LatchParameter(
-        display_name="HTO Tags path",
-        batch_table_column=True,
-    ),
-    "hto_position": LatchParameter(
-        display_name="HTO Position",
-        batch_table_column=True,
-    ),
-    "hto_annotation": LatchParameter(
-        display_name="HTO Annotation",
         batch_table_column=True,
     ),
     "hto_colormap": LatchParameter(
@@ -256,7 +228,36 @@ full_mode_parameters = {
     "exons_only": LatchParameter(
         display_name="Exons Only",
         batch_table_column=True,
-    )}
+    ),
+    "snt_fastq": LatchParameter(
+        display_name="SNT FASTQ Path",
+        batch_table_column=True,
+    ),
+    "snt_tags": LatchParameter(
+        display_name="SNT Tags path",
+        batch_table_column=True,
+    ),
+    "snt_position": LatchParameter(
+        display_name="SNT Position",
+        batch_table_column=True,
+    ),
+    "snt_label": LatchParameter(
+        display_name="SNT Label",
+        batch_table_column=True,
+    ),
+    "hto_fastq": LatchParameter(
+        display_name="HTO FASTQ Path",
+        batch_table_column=True,
+    ),
+    "hto_tags": LatchParameter(
+        display_name="HTO Tags path",
+        batch_table_column=True,
+    ),
+    "hto_position": LatchParameter(
+        display_name="HTO Position",
+        batch_table_column=True,
+    ),
+}
 
 cells_mode_parameters = {
     "previous": LatchParameter(display_name="Previous Directory",
@@ -364,48 +365,36 @@ shared_full_cells_mode_spoiler_section = Section("",
                                                          "report_id",
                                                          "report_description",
                                                      ),
-                                                 ),
-                                                 Section(
-                                                     "SNT",
-                                                     Params(
-                                                         "snt_fastq",
-                                                         "snt_tags",
-                                                         "snt_position",
-                                                         "snt_annotation",
-                                                         "snt_colormap",
-                                                         "snt_min_percent",
-                                                         "snt_max_percent",
-                                                         "snt_min_value",
-                                                         "snt_max_value",
-                                                     ),
-                                                 ),
-                                                 Section(
-                                                     "HTO",
-                                                     Params(
-                                                         "hto_fastq",
-                                                         "hto_tags",
-                                                         "hto_position",
-                                                         "hto_annotation",
-                                                         "hto_colormap",
-                                                         "hto_min_percent",
-                                                         "hto_max_percent",
-                                                         "hto_min_value",
-                                                         "hto_max_value",
-                                                         "hto_colorbar",
-                                                     ),
                                                  )
                                                  )
 
-shared_spoiler_resource_allocation = Section("",
-                                             Section(
-                                                 "Override Automatic Resource Allocation \n(Use With Caution)",
-                                                 Params(
-                                                     "override_ram_gb",
-                                                     "override_disk_gb",
-                                                     "override_cpu"
-                                                 )
-                                             )
-                                             )
+# Cells-mode specific specific SNT and HTO spoiler excludes --snt-fastq, --snt-tags, --snt-position.
+cells_mode_spoiler_section = Section("",
+                                         Section(
+                                             "SNT",
+                                             Params(
+                                                 "snt_annotation",
+                                                 "snt_colormap",
+                                                 "snt_min_percent",
+                                                 "snt_max_percent",
+                                                 "snt_min_value",
+                                                 "snt_max_value",
+                                             ),
+                                         ),
+                                         Section(
+                                             "HTO",
+                                             Params(
+                                                 "hash_cellsmode",
+                                                 "hto_colormap",
+                                                 "hto_min_percent",
+                                                 "hto_max_percent",
+                                                 "hto_min_value",
+                                                 "hto_max_value",
+                                                 "hto_colorbar",
+                                             ),
+                                         )
+                                     )
+
 
 full_mode_spoiler_section = Section("",
                                     Section(
@@ -435,6 +424,35 @@ full_mode_spoiler_section = Section("",
                                             "run_barnyard",
                                         ),
                                     ),
+                                    Section(
+                                        "SNT",
+                                        Params(
+                                            "snt_fastq",
+                                            "snt_tags",
+                                            "snt_position",
+                                            "snt_label",
+                                            "snt_annotation",
+                                            "snt_colormap",
+                                            "snt_min_percent",
+                                            "snt_max_percent",
+                                            "snt_min_value",
+                                            "snt_max_value",
+                                        ),
+                                    ),
+                                    Section(
+                                        "HTO",
+                                        Params(
+                                            "hto_fastq",
+                                            "hto_tags",
+                                            "hto_position",
+                                            "hto_colormap",
+                                            "hto_min_percent",
+                                            "hto_max_percent",
+                                            "hto_min_value",
+                                            "hto_max_value",
+                                            "hto_colorbar",
+                                        ),
+                                    )
                                     )
 
 full_mode_mapping_section = Section(
@@ -459,6 +477,17 @@ full_mode_mapping_section = Section(
     )
 )
 
+shared_spoiler_override_resources = Section("",
+                                            Section(
+                                                 "Override Automatic Resource Allocation \n(Use With Caution)",
+                                                 Params(
+                                                     "override_ram_gb",
+                                                     "override_disk_gb",
+                                                     "override_cpu"
+                                                 )
+                                             )
+                                            )
+
 section_full_mode = Section(
     "Full Mode",
     Params("output_directory",
@@ -470,7 +499,7 @@ section_full_mode = Section(
         "Additional Parameters",
         full_mode_spoiler_section,
         shared_full_cells_mode_spoiler_section,
-        shared_spoiler_resource_allocation)
+        shared_spoiler_override_resources)
 )
 
 section_cells_mode = Section(
@@ -480,8 +509,8 @@ section_cells_mode = Section(
     Spoiler(
         "Additional Parameters",
         shared_full_cells_mode_spoiler_section,
-        Params("hash_cellsmode"),
-        shared_spoiler_resource_allocation
+        cells_mode_spoiler_section,
+        shared_spoiler_override_resources
     )
 )
 
@@ -502,10 +531,9 @@ section_buildmapref = Section(
             "sparsity",
             "additional_params_buildmapref"
         ),
-        shared_spoiler_resource_allocation
+        shared_spoiler_override_resources
     )
 )
-
 
 # Dashboard Layout
 metadata = LatchMetadata(
@@ -543,7 +571,6 @@ def pipseeker_wf(*,
                  fastq_directory: Optional[LatchDir] = None,
                  chemistry: Chemistry = Chemistry.v4,
                  genome_source: str,
-                 # Set prebuilt_genome option to allow for None value.
                  prebuilt_genome: GenomeType,
                  custom_prebuilt_genome: Optional[LatchDir],
                  custom_prebuilt_genome_zipped: Optional[LatchFile],
@@ -576,6 +603,7 @@ def pipseeker_wf(*,
                  snt_fastq: Optional[LatchDir] = None,
                  snt_tags: Optional[LatchFile] = None,
                  snt_position: int = 0,
+                 snt_label: Optional[str] = None,
                  snt_annotation: Optional[LatchFile] = None,
                  snt_colormap: str = "gray-to-green",
                  snt_min_percent: int = 1,
@@ -585,7 +613,6 @@ def pipseeker_wf(*,
                  hto_fastq: Optional[LatchDir] = None,
                  hto_tags: Optional[LatchFile] = None,
                  hto_position: int = 0,
-                 hto_annotation: Optional[LatchFile] = None,
                  hto_colormap: str = "gray-to-red",
                  hto_colorbar: bool = False,
                  hto_min_percent: int = 1,
@@ -611,7 +638,7 @@ def pipseeker_wf(*,
                  override_ram_gb: Optional[int] = None,
                  override_disk_gb: Optional[int] = None,
                  override_cpu: Optional[int] = None
-                 
+
                  ) -> LatchOutputDir:
     """
     # Fluent BioSciences PIPseeker
@@ -640,22 +667,24 @@ def pipseeker_wf(*,
                           resolution=resolution, clustering_sensitivity=clustering_sensitivity,
                           min_clusters_kmeans=min_clusters_kmeans, max_clusters_kmeans=max_clusters_kmeans,
                           umap_axes=umap_axes, annotation=annotation, report_id=report_id,
-                          report_description=report_description, snt_fastq=snt_fastq, snt_tags=snt_tags,
+                          report_description=report_description, snt_fastq=snt_fastq,
+                          snt_tags=snt_tags, snt_label=snt_label,
                           snt_position=snt_position, snt_annotation=snt_annotation, snt_colormap=snt_colormap,
                           snt_min_percent=snt_min_percent, snt_max_percent=snt_max_percent, snt_min_value=snt_min_value,
                           snt_max_value=snt_max_value, hto_fastq=hto_fastq, hto_tags=hto_tags,
-                          hto_position=hto_position, hto_annotation=hto_annotation, hto_colormap=hto_colormap,
+                          hto_position=hto_position, hto_colormap=hto_colormap,
                           hto_colorbar=hto_colorbar, hto_min_percent=hto_min_percent, hto_max_percent=hto_max_percent,
                           hto_min_value=hto_min_value, hto_max_value=hto_max_value, previous=previous,
                           hash_cellsmode=hash_cellsmode, custom_genome_reference_fasta=custom_genome_reference_fasta,
                           custom_genome_reference_gtf=custom_genome_reference_gtf, include_types=include_types,
                           exclude_types=exclude_types, biotype_tag=biotype_tag, read_length=read_length,
-                          sparsity=sparsity, additional_params_buildmapref=additional_params_buildmapref, 
-                          override_ram_gb=override_ram_gb, override_disk_gb=override_disk_gb, 
+                          sparsity=sparsity, additional_params_buildmapref=additional_params_buildmapref,
+                          override_ram_gb=override_ram_gb, override_disk_gb=override_disk_gb,
                           override_cpu=override_cpu)
 
 
-# Testing
+
+# Test Data Configuration
 
 LaunchPlan(
     pipseeker_wf,

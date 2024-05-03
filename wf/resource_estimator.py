@@ -170,6 +170,8 @@ def get_num_threads(pipseeker_mode: str = None,
     For 'cells' mode, set based on the size of the previous directory.
     For 'buildmapref' mode, set to 32 cores to tap into the max efficiency of STAR.
     """
+    print(f'pipseeker_mode: {pipseeker_mode}')
+
     # Check for override.
     if override_cpu is not None:
         if override_cpu > 64:
@@ -183,7 +185,7 @@ def get_num_threads(pipseeker_mode: str = None,
     if not pipseeker_mode:
         raise ValueError('pipseeker_mode must be specified to determine the number of threads.')
 
-    if pipseeker_mode == PIPseekerMode.full:
+    if pipseeker_mode == PIPseekerMode.full.value:
 
         fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=None)
         fastqs_size_gb = fastqs_size_bytes / 1024 ** 3
@@ -199,7 +201,7 @@ def get_num_threads(pipseeker_mode: str = None,
         else:
             num_threads = 64
 
-    elif pipseeker_mode == PIPseekerMode.cells:
+    elif pipseeker_mode == PIPseekerMode.cells.value:
         previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
         previous_dir_size_gb = previous_dir_size_bytes / 1024 ** 3
 
@@ -240,8 +242,11 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
     """
     For 'full' mode, use the size of the input fastqs and STAR index to estimate disk space.
     For 'cells' mode, use the size of the previous directory * 1.5 (or updated safety margin) to estimate disk space.
+                    --> uses a min of 2GB if the above is less than this value
     For 'buildmapref' mode, set to 100 GB as a default.
     """
+    print(f'pipseeker_mode: {pipseeker_mode}')
+
     # Check for override.
     if override_disk_gb:
         return override_disk_gb
@@ -249,7 +254,7 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
     if pipseeker_mode is None:
         raise ValueError('pipseeker_mode must be specified.')
 
-    if pipseeker_mode == PIPseekerMode.full:
+    if pipseeker_mode == PIPseekerMode.full.value:
         # Set defaults.
         fastqs_size_bytes = 0
         snt_fastq_size_bytes = 0
@@ -287,7 +292,7 @@ def get_disk_requirement_gb(*, pipseeker_mode: str = None,
         # In event have < 1GB, will be rounded to 0. Setting minimum default disk as 2GB.
         return int(max(required_space_gb, 2))
 
-    elif pipseeker_mode == PIPseekerMode.cells:
+    elif pipseeker_mode == PIPseekerMode.cells.value:
         # Get the size of the previous directory and multiply by safety margin
         #  to include chance of adding additional sensitivity levels, etc.
         previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
@@ -315,9 +320,13 @@ def get_memory_requirement_gb(*,
                               **kwargs) -> int:
     """
     For 'full' mode, use standard peak barcoding, STAR, and molecule info RAM estimators.
-    For 'cells' mode, use the previous directory size to estimate RAM.
+    For 'cells' mode, use the previous directory size to estimate RAM
+                    --> set to 100 GB if < (2x previous dir size).
+                    # NOTE: Very rough calc. because this hasn't been tracked yet.
     For 'buildmapref' mode, set to 50 GB as a default.
     """
+    print(f'pipseeker_mode: {pipseeker_mode}')
+
     # Check for override.
     if override_ram_gb:
         return override_ram_gb
@@ -325,7 +334,7 @@ def get_memory_requirement_gb(*,
     if pipseeker_mode is None:
         raise ValueError('pipseeker_mode must be specified.')
 
-    if pipseeker_mode == PIPseekerMode.full:
+    if pipseeker_mode == PIPseekerMode.full.value:
         # Get fastq size.
         downsample_factor = get_downsample_factor(downsample_to=downsample_to, input_reads=input_reads)
         fastqs_size_bytes = get_fastqs_size_bytes(fastq_directory=fastq_directory, downsample_factor=downsample_factor)
@@ -345,15 +354,16 @@ def get_memory_requirement_gb(*,
         molinfo_ram_bytes = molinfo_ram_estimator(baseline_ram_bytes=baseline_ram_bytes,
                                                   fastqs_size_bytes=fastqs_size_bytes,
                                                   num_threads=num_threads)
-        return int(max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3)
+        return int(max(barcoding_ram_bytes, star_ram_bytes, molinfo_ram_bytes) / 1024 ** 3) + 1 # Round up
 
-    elif pipseeker_mode == PIPseekerMode.cells:
-        # Num threads calc.
+    elif pipseeker_mode == PIPseekerMode.cells.value:
+        # Num threads calc should technically be incorporated here but has never been measured.
+
         # Get previous dir size.
         previous_dir_size_bytes = get_previous_dir_size(previous_directory=previous)
-        previous_dir_size_gb = previous_dir_size_bytes / 1024 ** 3
+        previous_dir_size_gb = int(previous_dir_size_bytes / 1024 ** 3) + 1  # Round up
 
-        return min(int(previous_dir_size_gb / 1024 ** 3), 100)
+        return min(previous_dir_size_gb * 2, 100)  # Round up to nearest GB.
 
     else:
         # buildmapref_mode

@@ -497,8 +497,8 @@ section_full_mode = Section(
     full_mode_mapping_section,
     Spoiler(
         "Additional Parameters",
-        full_mode_spoiler_section,
         shared_full_cells_mode_spoiler_section,
+        full_mode_spoiler_section,
         shared_spoiler_override_resources)
 )
 

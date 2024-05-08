@@ -182,7 +182,7 @@ class ResourceEstimatorTest(UnitTest):
             # The following test requires having an existing sample sitting on the latch platform.
             previous_dir = 'latch://26230.account/3.2.0_small_test'
             required_ram = get_memory_requirement_gb(previous=LatchDir(previous_dir),
-                                                        pipseeker_mode=PIPseekerMode.cells.value.value,
+                                                        pipseeker_mode=PIPseekerMode.cells.value,
                                                         fastq_directory=None,
                                                         snt_fastq=None,
                                                         hto_fastq=None,
@@ -193,14 +193,14 @@ class ResourceEstimatorTest(UnitTest):
                                                         downsample_to=None,
                                                         input_reads=None,
                                                         sorted_bam=False)
-            self.assertEqual(required_ram, 2)
+            self.assertEqual(required_ram, 13)
         except FileNotFoundError as e:
             print("Skipping test requiring existing sample on Latch: ", e)
 
 
     def test_disk_requirement_gb(self):
         # On s3 (human genome is 9.61 GB).
-        required_ram = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
+        required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
                                                pipseeker_mode=PIPseekerMode.full.value,
                                                snt_fastq=None,
                                                hto_fastq=None,
@@ -211,7 +211,7 @@ class ResourceEstimatorTest(UnitTest):
                                                downsample_to=None,
                                                input_reads=None,
                                                sorted_bam=False)
-        self.assertEqual(required_ram, 32)
+        self.assertEqual(required_disk, 44)
 
         # Zipped STAR index.
         #   Will use 2GB for the zipped index, since STAR index is only 0.002 GB and rounds to 0.
@@ -224,7 +224,7 @@ class ResourceEstimatorTest(UnitTest):
                                                 downsample_to=None,
                                                 input_reads=None,
                                                 sorted_bam=False)
-        self.assertEqual(required_disk, 2)
+        self.assertEqual(required_disk, 4)
 
         # Unzipped STAR index.
         #   Again, uses 2GB because of small unzipped index size.
@@ -238,7 +238,7 @@ class ResourceEstimatorTest(UnitTest):
                                                 downsample_to=None,
                                                 input_reads=None,
                                                 sorted_bam=False)
-        self.assertEqual(required_disk, 2)
+        self.assertEqual(required_disk, 4)
 
         # No fastqs.
         required_disk = get_disk_requirement_gb(fastq_directory=None,
@@ -251,7 +251,7 @@ class ResourceEstimatorTest(UnitTest):
                                                 downsample_to=None,
                                                 input_reads=None,
                                                 sorted_bam=False)
-        self.assertEqual(required_disk, 2)
+        self.assertEqual(required_disk, 4)
 
         # No fastqs, no genome.
         required_disk = get_disk_requirement_gb(fastq_directory=None,
@@ -263,7 +263,7 @@ class ResourceEstimatorTest(UnitTest):
                                                 downsample_to=None,
                                                 input_reads=None,
                                                 sorted_bam=False)
-        self.assertEqual(required_disk, 2)
+        self.assertEqual(required_disk, 4)
 
         # Test the override function
         required_disk = get_disk_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),

@@ -129,32 +129,3 @@ class PIPseekerTest(UnitTest):
 if __name__ == '__main__':
 
     unittest.main()
-
-
-#
-    import subprocess
-    import pty
-    import select
-
-    # Start up the test environment, using the top-level directory of the Latch project as the working directory.
-    latch_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Relies on being 2 dirs up from containing dir, test_data.
-    os.chdir(latch_dir_path)
-    # Deploy the test dev env.
-    master_fd, slave_fd = pty.openpty()
-
-    proc = subprocess.Popen(['latch', 'develop', '.', ';', 'python3 unit_tests/test_pipseeker.py'], stdin=slave_fd, stdout=slave_fd, stderr=subprocess.STDOUT,
-                            close_fds=True)
-    os.close(slave_fd)  # Close the slave FD because it's now being used by the subprocess.
-
-    try:
-        while True:
-            r, _, _ = select.select([master_fd], [], [], 0.1)
-            if r:
-                output = os.read(master_fd, 1024).decode()
-                if output:
-                    print(output, end='')  # Print output in real time
-            if proc.poll() is not None:
-                break
-    finally:
-        os.close(master_fd)
-

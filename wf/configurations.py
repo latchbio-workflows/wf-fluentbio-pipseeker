@@ -41,6 +41,13 @@ class Verbosity(Enum):
     two = "2"
 
 
+class ClusteringSensitivity(Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+
+
+
 def get_mapping_reference(*, genome_source, prebuilt_genome, custom_prebuilt_genome,
                           custom_prebuilt_genome_zipped, get_path_only=False):
     """

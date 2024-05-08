@@ -17,7 +17,7 @@ from latch.types import (
 )
 from latch.resources.launch_plan import LaunchPlan
 from wf.pipseeker import pipseeker_task
-from wf.configurations import Chemistry, GenomeType, Verbosity
+from wf.configurations import Chemistry, GenomeType, Verbosity, ClusteringSensitivity
 
 # Define the parameters that will be displayed in the GUI and used in the workflow.
 # Note: the actual grouping of parameters is not important here, as all will be merged and available in the end.
@@ -593,7 +593,7 @@ def pipseeker_wf(*,
                  principal_components: Optional[int] = None,
                  nearest_neighbors: Optional[int] = None,
                  resolution: Optional[int] = None,
-                 clustering_sensitivity: str = "medium",
+                 clustering_sensitivity: ClusteringSensitivity = ClusteringSensitivity.medium,
                  min_clusters_kmeans: Optional[int] = None,
                  max_clusters_kmeans: Optional[int] = None,
                  umap_axes: bool = False,

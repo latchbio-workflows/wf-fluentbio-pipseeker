@@ -6,7 +6,7 @@ from typing import Optional
 from latch import custom_task
 from latch.functions.messages import message
 from latch.types import LatchDir, LatchFile, LatchOutputDir
-from wf.configurations import GenomeType, PIPseekerMode, Chemistry, Verbosity, get_mapping_reference
+from wf.configurations import GenomeType, PIPseekerMode, Chemistry, Verbosity, ClusteringSensitivity, get_mapping_reference
 from wf.resource_estimator import get_num_threads, get_memory_requirement_gb, get_disk_requirement_gb
 
 sys.stdout.reconfigure(line_buffering=True)
@@ -41,7 +41,7 @@ def pipseeker_task(*,
                    principal_components: Optional[int] = None,
                    nearest_neighbors: Optional[int] = None,
                    resolution: Optional[int] = None,
-                   clustering_sensitivity: str = "medium",
+                   clustering_sensitivity: ClusteringSensitivity = ClusteringSensitivity.medium,
                    min_clusters_kmeans: Optional[int] = None,
                    max_clusters_kmeans: Optional[int] = None,
                    umap_axes: bool = False,
@@ -96,8 +96,6 @@ def pipseeker_task(*,
 
                    ) -> LatchOutputDir:
 
-    print(f"Running {pipseeker_mode}")
-
     if override_cpu or override_ram_gb or override_disk_gb:
         print(f"Overriding resource allocation:")
         if override_ram_gb:
@@ -140,7 +138,7 @@ def pipseeker_task(*,
             "--diff-exp-genes",
             f"{diff_exp_genes}",
             "--clustering-sensitivity",
-            f"{clustering_sensitivity}"
+            f"{clustering_sensitivity.value}"
         ]
 
         # Full Mode.

@@ -170,7 +170,7 @@ shared_parameters = {
         batch_table_column=True,
     ),
     "override_cpu": LatchParameter(
-        display_name="Override CPU (GB)",
+        display_name="Override CPU (# Cores)",
         batch_table_column=True,
     )
 }
@@ -205,7 +205,7 @@ full_mode_parameters = {
         batch_table_column=True,
     ),
     "downsample_to": LatchParameter(
-        display_name="Downsample",
+        display_name="Downsample (Input Desired # of Reads)",
         batch_table_column=True,
     ),
     "input_reads": LatchParameter(

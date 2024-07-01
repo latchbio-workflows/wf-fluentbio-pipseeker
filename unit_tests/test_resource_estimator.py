@@ -133,7 +133,7 @@ class ResourceEstimatorTest(UnitTest):
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        self.assertEqual(39, required_ram)
+        self.assertEqual(49, required_ram)
 
         # Unzipped STAR index.
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),
@@ -146,7 +146,7 @@ class ResourceEstimatorTest(UnitTest):
                                                  downsample_to=None,
                                                  input_reads=None,
                                                  sorted_bam=False)
-        self.assertEqual(39, required_ram)
+        self.assertEqual(49, required_ram)
 
         # For the pre-built references hosted on s3.
         #   Human ref is 9.61 GB.
@@ -161,7 +161,7 @@ class ResourceEstimatorTest(UnitTest):
                                                downsample_to=None,
                                                input_reads=None,
                                                sorted_bam=False)
-        self.assertEqual(39, required_ram)
+        self.assertEqual(49, required_ram)
 
         # Test the override function
         required_ram = get_memory_requirement_gb(fastq_directory=LatchDir(self.latch_fastq_dir_path),

@@ -32,7 +32,7 @@ class PIPseekerMode(Enum):
 class Chemistry(Enum):
     v3 = "v3"
     v4 = "v4"
-    v5 = "v5"
+    v5 = "V"
 
 
 class Verbosity(Enum):

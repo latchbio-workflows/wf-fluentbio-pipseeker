@@ -537,7 +537,7 @@ section_buildmapref = Section(
 
 # Dashboard Layout
 metadata = LatchMetadata(
-    display_name=f"Fluent BioSciences PIPseeker v3.2.0",
+    display_name=f"Fluent BioSciences PIPseeker v3.3.0",
     documentation="",
     author=LatchAuthor(
         name="Fluent BioSciences"),

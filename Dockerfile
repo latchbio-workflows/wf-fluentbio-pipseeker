@@ -19,7 +19,7 @@ env LANG='en_US.UTF-8'
 
 arg DEBIAN_FRONTEND=noninteractive
 
-run curl -L https://fbs-public.s3.us-east-2.amazonaws.com/public-pipseeker-releases/pipseeker-v3.2.0/pipseeker-v3.2.0-linux.tar.gz -o pipseeker.tar.gz &&\
+run curl -L https://fbs-public.s3.us-east-2.amazonaws.com/public-pipseeker-releases/pipseeker-v3.3.0/pipseeker-v3.3.0-linux.tar.gz -o pipseeker.tar.gz &&\
     tar -xzvf pipseeker.tar.gz &&\
     mv pipseeker*/pipseeker /bin/ &&\
     chmod +x /bin/pipseeker
@@ -28,7 +28,7 @@ run apt-get install unzip
 
 # Latch SDK
 # DO NOT REMOVE
-run pip install latch==2.43.1
+run pip install latch==2.47.8
 run mkdir /opt/latch
 
 # Copy workflow data (use .dockerignore to skip files)

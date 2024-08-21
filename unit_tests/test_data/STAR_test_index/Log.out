@@ -1,0 +1,90 @@
+STAR version=2.7.10a_alpha_220818
+STAR compilation time,server,dir=2022-09-27T13:54:45+0000 :/home/STAR-2.7.10a_alpha_220818/source
+STAR git: 
+##### Command Line:
+/root/dev/pipeline/src/STAR/linux/STAR --runMode genomeGenerate --genomeFastaFiles /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa --sjdbGTFfile /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf --genomeDir /root/dev/pipeline/test/test_data/CLI/STAR_index --sjdbOverhang 99 --runThreadN 8 --genomeSAindexNbases 4
+##### Initial USER parameters from Command Line:
+###### All USER parameters from Command Line:
+runMode                       genomeGenerate        ~RE-DEFINED
+genomeFastaFiles              /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa        ~RE-DEFINED
+sjdbGTFfile                   /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf     ~RE-DEFINED
+genomeDir                     /root/dev/pipeline/test/test_data/CLI/STAR_index     ~RE-DEFINED
+sjdbOverhang                  99     ~RE-DEFINED
+runThreadN                    8     ~RE-DEFINED
+genomeSAindexNbases           4     ~RE-DEFINED
+##### Finished reading parameters from all sources
+
+##### Final user re-defined parameters-----------------:
+runMode                           genomeGenerate   
+runThreadN                        8
+genomeDir                         /root/dev/pipeline/test/test_data/CLI/STAR_index
+genomeFastaFiles                  /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa   
+genomeSAindexNbases               4
+sjdbGTFfile                       /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf
+sjdbOverhang                      99
+
+-------------------------------
+##### Final effective command line:
+/root/dev/pipeline/src/STAR/linux/STAR   --runMode genomeGenerate      --runThreadN 8   --genomeDir /root/dev/pipeline/test/test_data/CLI/STAR_index   --genomeFastaFiles /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa      --genomeSAindexNbases 4   --sjdbGTFfile /root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf   --sjdbOverhang 99
+----------------------------------------
+
+Number of fastq files for each mate = 1
+ParametersSolo: --soloCellFilterType CellRanger2.2 filtering parameters:  3000 0.99 10
+Finished loading and checking parameters
+--genomeDir directory exists and will be overwritten: /root/dev/pipeline/test/test_data/CLI/STAR_index/
+Apr 26 10:16:26 ... starting to generate Genome files
+/root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa : chr # 0  "chr1" chrStart: 0
+/root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa : chr # 1  "chr2" chrStart: 262144
+/root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.fa : chr # 2  "chr3" chrStart: 524288
+Chromosome sequence lengths: 
+chr1	1344
+chr2	110
+chr3	2150
+Genome sequence total length = 3604
+Genome size with padding = 786432
+Apr 26 10:16:26 ..... processing annotations GTF
+Processing pGe.sjdbGTFfile=/root/dev/pipeline/test/test_data/CLI/STAR_index_bak/cli_test_ref.gtf, found:
+		11 transcripts
+		24 exons (non-collapsed)
+		12 collapsed junctions
+Total junctions: 12
+Apr 26 10:16:26 ..... finished GTF processing
+
+Estimated genome size with padding and SJs: total=genome+SJ=199786432 = 786432 + 199000000
+GstrandBit=32
+Number of SA indices: 7208
+Apr 26 10:16:26 ... starting to sort Suffix Array. This may take a long time...
+Number of chunks: 8;   chunks size limit: 8232 bytes
+Apr 26 10:16:26 ... sorting Suffix Array chunks and saving them to disk...
+Writing 1000 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_7 ; empty space on disk = 220815020032 bytes ... done
+Writing 8040 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_4 ; empty space on disk = 220815015936 bytes ...Writing 8192 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_2 ; empty space on disk = 220815011840 bytes ... done
+Writing 8192 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_2 ; empty space on disk = 220815011840 bytes ...Writing 8080 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_6 ; empty space on disk = 220815003648 bytes ... done
+ done
+Writing 8096 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_1 ; empty space on disk = 220814987264 bytes ... done
+Writing 8096 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_5 ; empty space on disk = 220814979072 bytes ...Writing 8184 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_3 ; empty space on disk = 220814979072 bytes ... done
+ done
+Writing 7976 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA_0 ; empty space on disk = 220814962688 bytes ... done
+Apr 26 10:16:26 ... loading chunks from disk, packing SA...
+Apr 26 10:16:26 ... finished generating suffix array
+Apr 26 10:16:26 ... generating Suffix Array index
+Apr 26 10:16:26 ... completed Suffix Array index
+Apr 26 10:16:26   Finished preparing junctions
+Apr 26 10:16:26 ..... inserting junctions into the genome indices
+Apr 26 10:16:26   Finished SA search: number of new junctions=12, old junctions=0
+Apr 26 10:16:26   Finished sorting SA indicesL nInd=4366
+Genome size with junctions=788820  786432   2388
+GstrandBit1=32   GstrandBit=32
+Apr 26 10:16:26   Finished inserting junction indices
+Apr 26 10:16:26   Finished SAi
+Apr 26 10:16:26 ..... finished inserting junctions into genome
+Apr 26 10:16:26 ... writing Genome to disk ...
+Writing 788820 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//Genome ; empty space on disk = 220815806464 bytes ... done
+SA size in bytes: 47746
+Apr 26 10:16:26 ... writing Suffix Array to disk ...
+Writing 47746 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SA ; empty space on disk = 220815065088 bytes ... done
+Apr 26 10:16:26 ... writing SAindex to disk
+Writing 8 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SAindex ; empty space on disk = 220815024128 bytes ... done
+Writing 40 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SAindex ; empty space on disk = 220815024128 bytes ... done
+Writing 1491 bytes into /root/dev/pipeline/test/test_data/CLI/STAR_index//SAindex ; empty space on disk = 220815024128 bytes ... done
+Apr 26 10:16:26 ..... finished successfully
+DONE: Genome generation, EXITING

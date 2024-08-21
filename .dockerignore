@@ -7,3 +7,18 @@ Dockerfile
 .git
 **/__pycache__
 .latch_report.tar.gz
+
+# ENV files
+.env
+.venv
+*.spec
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.idea
+.idea/
+.DS_Store
+.yml
+.vscode
